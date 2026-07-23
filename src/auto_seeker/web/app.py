@@ -1,7 +1,7 @@
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -13,7 +13,7 @@ WEB_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=WEB_DIR / "templates")
 
 
-def create_app(database_path):
+def create_app(database_path, default_page_size=50):
     app = FastAPI(title="AutoSeeker", docs_url=None, redoc_url=None)
     repository = SQLiteJobRepository(database_path)
     app.state.repository = repository
@@ -40,9 +40,23 @@ def create_app(database_path):
         run_id: int | None = Query(default=None, ge=1),
         sort: SortOrder = SortOrder.NEWEST,
         page: int = Query(default=1, ge=1),
-        page_size: int = Query(default=50),
+        page_size: int | None = Query(default=None),
     ):
-        query = JobQuery(q, minimum_salary, maximum_experience, location, new_only, run_id, sort, page, page_size)
+        effective_page_size = page_size if page_size is not None else default_page_size
+        try:
+            query = JobQuery(
+                q,
+                minimum_salary,
+                maximum_experience,
+                location,
+                new_only,
+                run_id,
+                sort,
+                page,
+                effective_page_size,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
         result = repository.query_jobs(query)
         values = {
             "q": query.q or "",
@@ -76,6 +90,10 @@ def create_app(database_path):
         job = repository.get_job_detail(job_id)
         if job is None:
             return templates.TemplateResponse(request, "errors/404.html", status_code=404)
+        parsed = urlparse(job["url"])
+        job["safe_url"] = (
+            job["url"] if parsed.scheme == "https" and parsed.hostname in {"zhipin.com", "www.zhipin.com"} else None
+        )
         return templates.TemplateResponse(request, "jobs/detail.html", {"job": job})
 
     @app.get("/runs", include_in_schema=False)

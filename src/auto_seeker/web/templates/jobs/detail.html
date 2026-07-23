@@ -13,6 +13,6 @@
     </dl></section>
   </div>
   <section class="skills-panel"><h2>技能</h2><p>{{ job.skills or '未提供' }}</p></section>
-  <a class="primary-link" href="{{ job.url }}" target="_blank" rel="noopener noreferrer">前往 BOSS 查看详情 ↗</a>
+  {% if job.safe_url %}<a class="primary-link" href="{{ job.safe_url }}" target="_blank" rel="noopener noreferrer">前往 BOSS 查看详情 ↗</a>{% endif %}
 </article>
 {% endblock %}

@@ -30,7 +30,7 @@
   <p class="company">{{ job.company }}</p>
   <div class="meta"><span>{{ job.experience }}</span><span>{{ job.degree }}</span><span>{{ job.location }}</span></div>
   <p class="skills">{{ job.skills }}</p>
-  <footer><span>最后发现 {{ job.last_seen_at }}</span><a href="{{ job.url }}" target="_blank" rel="noopener noreferrer">BOSS 详情 ↗</a></footer>
+  <footer><span>最后发现 {{ job.last_seen_at }}</span><a href="/jobs/{{ job.job_id }}">查看详情 →</a></footer>
 </article>
 {% endfor %}
 </div>

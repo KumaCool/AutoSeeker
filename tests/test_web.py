@@ -29,7 +29,22 @@ def seed_jobs(app):
                 skills="Vue TypeScript",
                 url="https://www.zhipin.com/job_detail/id-1.html",
                 job_id="id-1",
-            )
+            ),
+            Job(
+                fetched_at="2026-07-24 09:00:00",
+                job_name="不安全链接",
+                company="示例公司",
+                salary="20-30K",
+                salary_low=20,
+                salary_high=30,
+                experience="经验不限",
+                degree="本科",
+                location="武汉",
+                boss="招聘者",
+                skills="HTML",
+                url="javascript:alert(1)",
+                job_id="unsafe",
+            ),
         ],
     )
     repository.complete_run(first, pages_completed=1, matched_count=1, new_count=1)
@@ -95,6 +110,12 @@ class JobListWebTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 422)
 
+    def test_invalid_page_size_returns_422(self):
+        with tempfile.TemporaryDirectory() as directory:
+            response = TestClient(create_app(Path(directory) / "autoseeker.sqlite3")).get("/jobs?page_size=21")
+
+        self.assertEqual(response.status_code, 422)
+
 
 class JobDetailWebTests(unittest.TestCase):
     def test_detail_renders_fields_and_safe_external_link(self):
@@ -117,6 +138,16 @@ class JobDetailWebTests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("没有找到这个职位", response.text)
         self.assertIn("text/html", response.headers["content-type"])
+
+    def test_untrusted_job_url_is_not_rendered_as_link(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3")
+            seed_jobs(app)
+            response = TestClient(app).get("/jobs/unsafe")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("javascript:alert(1)", response.text)
+        self.assertNotIn("前往 BOSS 查看详情", response.text)
 
 
 class CollectionRunsWebTests(unittest.TestCase):
