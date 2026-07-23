@@ -4,6 +4,8 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
+from auto_seeker.models import Job
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS collection_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -119,3 +121,80 @@ class SQLiteJobRepository:
         with self.connect() as connection:
             row = connection.execute("SELECT * FROM collection_runs WHERE id=?", (run_id,)).fetchone()
         return dict(row) if row else None
+
+    def save_jobs(self, run_id, jobs):
+        unique = {}
+        for value in jobs:
+            item = value if isinstance(value, Job) else Job(**value)
+            if not item.job_id:
+                raise ValueError("job_id 不能为空")
+            unique[item.job_id] = item
+
+        new_count = 0
+        now = self._now()
+        with self.connect() as connection:
+            for item in unique.values():
+                exists = connection.execute("SELECT 1 FROM jobs WHERE job_id=?", (item.job_id,)).fetchone()
+                if exists:
+                    connection.execute(
+                        """UPDATE jobs SET
+                           job_name=?, company=?, salary=?, salary_low=?, salary_high=?, experience=?, degree=?,
+                           location=?, boss=?, skills=?, url=?, last_seen_at=?, last_seen_run_id=?, updated_at=?
+                           WHERE job_id=?""",
+                        (
+                            item.job_name,
+                            item.company,
+                            item.salary,
+                            item.salary_low,
+                            item.salary_high,
+                            item.experience,
+                            item.degree,
+                            item.location,
+                            item.boss,
+                            item.skills,
+                            item.url,
+                            item.fetched_at,
+                            run_id,
+                            now,
+                            item.job_id,
+                        ),
+                    )
+                else:
+                    connection.execute(
+                        """INSERT INTO jobs(
+                           job_id, job_name, company, salary, salary_low, salary_high, experience, degree, location,
+                           boss, skills, url, first_seen_at, last_seen_at, first_seen_run_id, last_seen_run_id,
+                           created_at, updated_at
+                           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (
+                            item.job_id,
+                            item.job_name,
+                            item.company,
+                            item.salary,
+                            item.salary_low,
+                            item.salary_high,
+                            item.experience,
+                            item.degree,
+                            item.location,
+                            item.boss,
+                            item.skills,
+                            item.url,
+                            item.fetched_at,
+                            item.fetched_at,
+                            run_id,
+                            run_id,
+                            now,
+                            now,
+                        ),
+                    )
+                    new_count += 1
+        return new_count
+
+    def get_job(self, job_id):
+        with self.connect() as connection:
+            row = connection.execute("SELECT * FROM jobs WHERE job_id=?", (job_id,)).fetchone()
+        return dict(row) if row else None
+
+    def count_jobs(self):
+        with self.connect() as connection:
+            return connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
