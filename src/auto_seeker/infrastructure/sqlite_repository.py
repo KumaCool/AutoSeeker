@@ -4,6 +4,8 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
+from auto_seeker.application.query_jobs import JobQuery, QueryPage, SortOrder
+from auto_seeker.domain.filtering import experience_max_years
 from auto_seeker.models import Job
 
 SCHEMA = """
@@ -62,6 +64,7 @@ class SQLiteJobRepository:
         connection.execute("PRAGMA foreign_keys=ON")
         connection.execute("PRAGMA journal_mode=WAL")
         connection.execute("PRAGMA busy_timeout=5000")
+        connection.create_function("experience_max_years", 1, experience_max_years, deterministic=True)
         try:
             yield connection
             connection.commit()
@@ -198,3 +201,65 @@ class SQLiteJobRepository:
     def count_jobs(self):
         with self.connect() as connection:
             return connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
+
+    def _latest_completed_run_id(self, connection):
+        row = connection.execute(
+            "SELECT id FROM collection_runs WHERE status='completed' ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        return row[0] if row else None
+
+    def query_jobs(self, query: JobQuery):
+        clauses = []
+        parameters = []
+        if query.q:
+            clauses.append("(LOWER(job_name) LIKE ? OR LOWER(company) LIKE ? OR LOWER(skills) LIKE ?)")
+            pattern = f"%{query.q.lower()}%"
+            parameters.extend([pattern, pattern, pattern])
+        if query.minimum_salary is not None:
+            clauses.append("salary_low >= ?")
+            parameters.append(query.minimum_salary)
+        if query.location:
+            clauses.append("location LIKE ?")
+            parameters.append(f"%{query.location}%")
+        if query.maximum_experience is not None:
+            clauses.append("experience_max_years(experience) <= ?")
+            parameters.append(query.maximum_experience)
+        if query.run_id is not None:
+            clauses.append("last_seen_run_id = ?")
+            parameters.append(query.run_id)
+
+        with self.connect() as connection:
+            latest_run_id = self._latest_completed_run_id(connection)
+            if query.new_only:
+                clauses.append("first_seen_run_id = ?")
+                parameters.append(latest_run_id if latest_run_id is not None else -1)
+            where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+            total = connection.execute(f"SELECT COUNT(*) FROM jobs {where}", parameters).fetchone()[0]
+            order_by = {
+                SortOrder.NEWEST: "is_new DESC, last_seen_at DESC, salary_low DESC",
+                SortOrder.SALARY_DESC: "salary_low DESC, last_seen_at DESC",
+                SortOrder.LAST_SEEN: "last_seen_at DESC, salary_low DESC",
+            }[query.sort]
+            select_parameters = [latest_run_id, *parameters, query.page_size, query.offset]
+            rows = connection.execute(
+                f"""SELECT jobs.*, (first_seen_run_id = ?) AS is_new
+                    FROM jobs {where} ORDER BY {order_by} LIMIT ? OFFSET ?""",
+                select_parameters,
+            ).fetchall()
+            items = [dict(row) for row in rows]
+            for item in items:
+                item["is_new"] = bool(item["is_new"])
+        return QueryPage(items=items, total=total, page=query.page, page_size=query.page_size)
+
+    def list_runs(self, limit=50, offset=0):
+        if limit < 1 or offset < 0:
+            raise ValueError("limit 必须大于 0，offset 不得为负")
+        with self.connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM collection_runs ORDER BY id DESC LIMIT ? OFFSET ?",
+                (limit, offset),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def get_job_detail(self, job_id):
+        return self.get_job(job_id)

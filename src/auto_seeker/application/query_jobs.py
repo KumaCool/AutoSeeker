@@ -22,7 +22,7 @@ class JobQuery:
     location: str | None = None
     new_only: bool = False
     run_id: int | None = None
-    sort: SortOrder | str = SortOrder.NEWEST
+    sort: SortOrder = SortOrder.NEWEST
     page: int = 1
     page_size: int = 50
 
@@ -30,7 +30,7 @@ class JobQuery:
         q = self.q.strip() if self.q else None
         location = self.location.strip() if self.location else None
         try:
-            sort = self.sort if isinstance(self.sort, SortOrder) else SortOrder(self.sort)
+            sort = self.sort if isinstance(self.sort, SortOrder) else SortOrder(self.sort)  # type: ignore[arg-type]
         except ValueError as exc:
             raise QueryError(f"不支持的排序：{self.sort}") from exc
         if self.page < 1:
