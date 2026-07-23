@@ -43,6 +43,19 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result, 0)
         legacy_main.assert_called_once_with()
 
+    def test_config_show_redacts_cookie_path(self):
+        result = self.run_cli("config", "show")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("<redacted-path>", result.stdout)
+        self.assertNotIn("var/secrets/cookies.json", result.stdout)
+
+    def test_help_lists_auth_command(self):
+        result = self.run_cli("--help")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("auth", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
