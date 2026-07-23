@@ -30,7 +30,7 @@ class CliTests(unittest.TestCase):
         result = self.run_cli("--version")
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("1.0.0", result.stdout)
+        self.assertIn("0.1.0", result.stdout)
 
     def test_collect_uses_packaged_cookie_loader(self):
         from auto_seeker import cli

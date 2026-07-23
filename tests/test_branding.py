@@ -25,7 +25,7 @@ class BrandingTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("autoseeker 1.0.0", result.stdout)
+        self.assertIn("autoseeker 0.1.0", result.stdout)
 
     def test_root_readme_uses_autoseeker_title(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

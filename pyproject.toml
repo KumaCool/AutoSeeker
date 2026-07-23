@@ -1,6 +1,6 @@
 [project]
 name = "autoseeker"
-version = "1.0.0"
+version = "0.1.0"
 description = "AutoSeeker job discovery, filtering, web display, and export automation"
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
