@@ -71,6 +71,7 @@ class JobListWebTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("尚无采集数据", response.text)
         self.assertIn("AutoSeeker", response.text)
+        self.assertNotIn("第 1 页 / 共 0 页", response.text)
 
     def test_list_renders_filters_and_escapes_content(self):
         with tempfile.TemporaryDirectory() as directory:

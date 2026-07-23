@@ -20,7 +20,7 @@
   <button type="submit">筛选</button>
   <a class="secondary" href="/jobs">清空</a>
 </form>
-<section class="results-head"><h2>{{ page.total }} 个职位</h2><span>第 {{ page.page }} 页 / 共 {{ page.page_count }} 页</span></section>
+<section class="results-head"><h2>{{ page.total }} 个职位</h2>{% if page.total %}<span>第 {{ page.page }} 页 / 共 {{ page.page_count }} 页</span>{% endif %}</section>
 {% if page.items %}
 <div class="job-grid">
 {% for job in page.items %}
