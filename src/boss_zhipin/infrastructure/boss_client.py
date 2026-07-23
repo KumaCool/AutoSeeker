@@ -1,6 +1,5 @@
 import urllib.parse
 
-
 API_URL = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
 DEFAULT_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/138 Safari/537.36"
 
@@ -24,17 +23,28 @@ class BossClient:
 
     def headers(self):
         return {
-            "user-agent": self.user_agent, "accept": "application/json, text/plain, */*",
+            "user-agent": self.user_agent,
+            "accept": "application/json, text/plain, */*",
             "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "content-type": "application/x-www-form-urlencoded", "origin": "https://www.zhipin.com",
-            "referer": self.page_url, "x-requested-with": "XMLHttpRequest",
+            "content-type": "application/x-www-form-urlencoded",
+            "origin": "https://www.zhipin.com",
+            "referer": self.page_url,
+            "x-requested-with": "XMLHttpRequest",
         }
 
     def data(self, page):
         return {
-            "scene": "1", "query": self.criteria.keyword, "city": self.criteria.city_code,
-            "experience": "", "degree": "", "industry": "", "scale": "", "salary": "",
-            "jobType": "", "page": str(page), "pageSize": str(self.page_size),
+            "scene": "1",
+            "query": self.criteria.keyword,
+            "city": self.criteria.city_code,
+            "experience": "",
+            "degree": "",
+            "industry": "",
+            "scale": "",
+            "salary": "",
+            "jobType": "",
+            "page": str(page),
+            "pageSize": str(self.page_size),
         }
 
     def request_page(self, page):

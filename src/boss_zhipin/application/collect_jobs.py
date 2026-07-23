@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
 
 from boss_zhipin.domain.filtering import extract_jobs
 
@@ -15,7 +15,7 @@ class CollectionResult:
     new_count: int
 
 
-def collect_jobs(client, stoken, repository, criteria, start_page, page_count, interval=0, sleep=time.sleep):
+def collect_jobs(client, stoken, repository, criteria, start_page, page_count, interval: float = 0, sleep=time.sleep):
     collected = {}
     failure = None
     pages_completed = 0

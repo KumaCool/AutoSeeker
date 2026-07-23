@@ -2,7 +2,6 @@ import argparse
 import json
 import sys
 from collections.abc import Sequence
-from pathlib import Path
 
 from boss_zhipin import __version__
 
@@ -39,9 +38,9 @@ def main(argv: Sequence[str] | None = None):
     args = build_parser().parse_args(argv)
     if args.command == "collect":
         ensure_legacy_import_path()
-        import boss_jobs
         import requests
 
+        import boss_jobs
         from boss_zhipin.application.collect_jobs import collect_jobs
         from boss_zhipin.config import PROJECT_ROOT, load_config
         from boss_zhipin.infrastructure.boss_client import BossClient
@@ -62,8 +61,10 @@ def main(argv: Sequence[str] | None = None):
         session = requests.Session()
         session.cookies.update(cookies)
         criteria = SearchCriteria(
-            config.search.keyword, config.search.city_code,
-            config.search.minimum_salary_k, config.search.maximum_experience_years,
+            config.search.keyword,
+            config.search.city_code,
+            config.search.minimum_salary_k,
+            config.search.maximum_experience_years,
         )
         client = BossClient(session, criteria, config.search.page_size, config.request.timeout_seconds)
         cache_dir = config.runtime.cache_dir
@@ -75,8 +76,13 @@ def main(argv: Sequence[str] | None = None):
         stoken = StokenService(session, client.page_url, cache_dir, client.user_agent, client.timeout)
         repository = ExcelJobRepository(output_path, PROJECT_ROOT / "outputs/wuhan-frontend-jobs.xlsx")
         result = collect_jobs(
-            client, stoken, repository, criteria, config.search.start_page,
-            config.search.page_count, config.request.interval_seconds,
+            client,
+            stoken,
+            repository,
+            criteria,
+            config.search.start_page,
+            config.search.page_count,
+            config.request.interval_seconds,
         )
         print(f"保存完成：符合条件={result.matched_count} 新增={result.new_count} Excel={output_path}")
         return 0

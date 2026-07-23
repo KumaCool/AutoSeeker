@@ -1,6 +1,6 @@
 import unittest
 
-from boss_zhipin.domain.filtering import extract_jobs, experience_max_years
+from boss_zhipin.domain.filtering import experience_max_years, extract_jobs
 from boss_zhipin.domain.salary import parse_salary
 from boss_zhipin.models import SearchCriteria
 
@@ -12,12 +12,24 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(experience_max_years("经验不限"), 0)
 
     def test_extract_jobs_returns_typed_filtered_job(self):
-        criteria = SearchCriteria(keyword="前端", city_code="101200100", minimum_salary_k=15, maximum_experience_years=3)
-        payload = {"zpData": {"jobList": [{
-            "salaryDesc": "15-25K", "jobExperience": "1-3年",
-            "encryptJobId": "job-id", "jobName": "前端开发", "brandName": "示例公司",
-            "cityName": "武汉", "skills": ["Vue", "TypeScript"],
-        }]}}
+        criteria = SearchCriteria(
+            keyword="前端", city_code="101200100", minimum_salary_k=15, maximum_experience_years=3
+        )
+        payload = {
+            "zpData": {
+                "jobList": [
+                    {
+                        "salaryDesc": "15-25K",
+                        "jobExperience": "1-3年",
+                        "encryptJobId": "job-id",
+                        "jobName": "前端开发",
+                        "brandName": "示例公司",
+                        "cityName": "武汉",
+                        "skills": ["Vue", "TypeScript"],
+                    }
+                ]
+            }
+        }
 
         jobs = extract_jobs(payload, criteria, fetched_at="2026-07-23 00:00:00")
 

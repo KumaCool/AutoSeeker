@@ -28,6 +28,7 @@ def extract_jobs(payload, criteria, fetched_at=None):
         max_years = experience_max_years(experience)
         if salary_low is None or salary_low < criteria.minimum_salary_k:
             continue
+        assert salary_high is not None
         if max_years is None or max_years > criteria.maximum_experience_years:
             continue
         encrypt_job_id = str(item.get("encryptJobId") or "")
@@ -37,15 +38,27 @@ def extract_jobs(payload, criteria, fetched_at=None):
             url = "https://www.zhipin.com" + url
         if not url and encrypt_job_id:
             url = f"https://www.zhipin.com/job_detail/{encrypt_job_id}.html"
-        location = " ".join(filter(None, [item.get("cityName"), item.get("areaDistrict"), item.get("businessDistrict")]))
+        location = " ".join(
+            filter(None, [item.get("cityName"), item.get("areaDistrict"), item.get("businessDistrict")])
+        )
         skills = item.get("skills") or item.get("jobLabels") or []
         if isinstance(skills, list):
             skills = "、".join(map(str, skills))
-        jobs.append(Job(
-            fetched_at=fetched_at, job_name=item.get("jobName") or item.get("positionName") or "",
-            company=item.get("brandName") or item.get("companyName") or "", salary=salary,
-            salary_low=salary_low, salary_high=salary_high, experience=experience,
-            degree=item.get("jobDegree") or item.get("degreeName") or "", location=location,
-            boss=item.get("bossName") or "", skills=str(skills), url=url, job_id=job_id or url,
-        ))
+        jobs.append(
+            Job(
+                fetched_at=fetched_at,
+                job_name=item.get("jobName") or item.get("positionName") or "",
+                company=item.get("brandName") or item.get("companyName") or "",
+                salary=salary,
+                salary_low=salary_low,
+                salary_high=salary_high,
+                experience=experience,
+                degree=item.get("jobDegree") or item.get("degreeName") or "",
+                location=location,
+                boss=item.get("bossName") or "",
+                skills=str(skills),
+                url=url,
+                job_id=job_id or url,
+            )
+        )
     return jobs

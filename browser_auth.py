@@ -11,7 +11,6 @@ from pathlib import Path
 
 from runtime_paths import COOKIE_FILE, LOG_DIR, active_profile_dir
 
-
 PROFILE_DIR = active_profile_dir()
 CHROME_LOG = LOG_DIR / "chrome-auth.log"
 LOGIN_URL = "https://www.zhipin.com/web/user/"
@@ -24,10 +23,7 @@ def is_logged_in(cookies):
 
 
 def save_cookies(cookies, destination=COOKIE_FILE):
-    zhipin_cookies = [
-        cookie for cookie in cookies
-        if str(cookie.get("domain", "")).lstrip(".").endswith("zhipin.com")
-    ]
+    zhipin_cookies = [cookie for cookie in cookies if str(cookie.get("domain", "")).lstrip(".").endswith("zhipin.com")]
     if not is_logged_in(zhipin_cookies):
         raise RuntimeError("浏览器会话中没有检测到有效的 BOSS 登录凭据")
 
@@ -110,9 +106,7 @@ def ensure_login_target(port):
     if page:
         return page
     encoded_url = urllib.parse.quote(LOGIN_URL, safe="")
-    request = urllib.request.Request(
-        f"http://127.0.0.1:{port}/json/new?{encoded_url}", method="PUT"
-    )
+    request = urllib.request.Request(f"http://127.0.0.1:{port}/json/new?{encoded_url}", method="PUT")
     with urllib.request.urlopen(request, timeout=3) as response:
         return json.loads(response.read().decode("utf-8"))
 
@@ -123,16 +117,18 @@ def read_page_cookies(target):
     except ImportError as exc:
         raise RuntimeError("缺少 websocket-client，请先运行 ./setup.sh") from exc
 
-    connection = websocket.create_connection(
-        target["webSocketDebuggerUrl"], timeout=3, suppress_origin=True
-    )
+    connection = websocket.create_connection(target["webSocketDebuggerUrl"], timeout=3, suppress_origin=True)
     try:
         request_id = 1
-        connection.send(json.dumps({
-            "id": request_id,
-            "method": "Network.getCookies",
-            "params": {"urls": ["https://www.zhipin.com"]},
-        }))
+        connection.send(
+            json.dumps(
+                {
+                    "id": request_id,
+                    "method": "Network.getCookies",
+                    "params": {"urls": ["https://www.zhipin.com"]},
+                }
+            )
+        )
         while True:
             payload = json.loads(connection.recv())
             if payload.get("id") != request_id:
@@ -154,8 +150,7 @@ def refresh_cookies(headless, timeout):
             if chrome_process.poll() is not None:
                 detail = chrome_log_tail()
                 raise RuntimeError(
-                    f"Google Chrome 已提前退出（exit={chrome_process.returncode}）"
-                    + (f"\n{detail}" if detail else "")
+                    f"Google Chrome 已提前退出（exit={chrome_process.returncode}）" + (f"\n{detail}" if detail else "")
                 )
             try:
                 target = ensure_login_target(port)

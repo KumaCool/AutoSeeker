@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_FILE = PROJECT_ROOT / "config" / "default.toml"
 
@@ -113,7 +112,8 @@ def load_config(path: str | Path | None = None, overrides: dict[str, Any] | None
     request = data["request"]
     return AppConfig(
         search=SearchConfig(
-            keyword=str(search["keyword"]), city_code=str(search["city_code"]),
+            keyword=str(search["keyword"]),
+            city_code=str(search["city_code"]),
             start_page=int(_positive("start_page", int(search["start_page"]))),
             page_count=int(_positive("page_count", int(search["page_count"]))),
             page_size=int(_positive("page_size", int(search["page_size"]))),

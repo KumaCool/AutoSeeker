@@ -4,7 +4,7 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 
-from boss_zhipin.infrastructure.excel_repository import ExcelJobRepository, HEADERS
+from boss_zhipin.infrastructure.excel_repository import HEADERS, ExcelJobRepository
 from boss_zhipin.models import Job
 
 
@@ -16,11 +16,41 @@ class ExcelRepositoryTests(unittest.TestCase):
             sheet = workbook.active
             sheet.title = "职位"
             sheet.append(HEADERS)
-            sheet.append(["old", "first", "是", "前端开发", "示例公司", "15-25K", 15, 25,
-                          "1-3年", "本科", "武汉", "招聘者", "Vue", "bad", "security-token"])
+            sheet.append(
+                [
+                    "old",
+                    "first",
+                    "是",
+                    "前端开发",
+                    "示例公司",
+                    "15-25K",
+                    15,
+                    25,
+                    "1-3年",
+                    "本科",
+                    "武汉",
+                    "招聘者",
+                    "Vue",
+                    "bad",
+                    "security-token",
+                ]
+            )
             workbook.save(output)
-            job = Job("new", "前端开发", "示例公司", "15-25K", 15, 25, "1-3年", "本科",
-                      "武汉", "招聘者", "Vue", "https://example/job", "short-id")
+            job = Job(
+                "new",
+                "前端开发",
+                "示例公司",
+                "15-25K",
+                15,
+                25,
+                "1-3年",
+                "本科",
+                "武汉",
+                "招聘者",
+                "Vue",
+                "https://example/job",
+                "short-id",
+            )
 
             count = ExcelJobRepository(output).save([job])
             result = load_workbook(output)["职位"]

@@ -11,6 +11,14 @@ dependencies = [
     "websocket-client>=1.8,<2",
 ]
 
+[dependency-groups]
+dev = [
+    "pre-commit>=4,<5",
+    "pyright>=1.1,<2",
+    "pytest>=8,<9",
+    "ruff>=0.12,<0.14",
+]
+
 [project.scripts]
 boss-zhipin = "boss_zhipin.cli:main"
 
@@ -25,5 +33,19 @@ build-backend = "hatchling.build"
 packages = ["src/boss_zhipin"]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+reportMissingTypeStubs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

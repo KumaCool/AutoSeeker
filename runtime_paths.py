@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 WORK_DIR = Path(__file__).resolve().parent
 RUNTIME_DIR = WORK_DIR / "var"
 SECRETS_DIR = RUNTIME_DIR / "secrets"

@@ -4,7 +4,6 @@ from pathlib import Path
 
 import requests
 
-
 API_URL = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
 
 

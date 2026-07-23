@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import Mock
 
 from boss_zhipin.application.collect_jobs import CollectionError, collect_jobs
-from boss_zhipin.models import Job, SearchCriteria
+from boss_zhipin.models import SearchCriteria
 
 
 class CollectionTests(unittest.TestCase):
@@ -35,10 +35,21 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(client.request_page.call_count, 2)
 
     def test_partial_results_are_saved_before_failure(self):
-        payload = {"code": 0, "zpData": {"jobList": [{
-            "salaryDesc": "15-20K", "jobExperience": "1-3年", "encryptJobId": "id",
-            "jobName": "前端", "brandName": "公司", "cityName": "武汉",
-        }]}}
+        payload = {
+            "code": 0,
+            "zpData": {
+                "jobList": [
+                    {
+                        "salaryDesc": "15-20K",
+                        "jobExperience": "1-3年",
+                        "encryptJobId": "id",
+                        "jobName": "前端",
+                        "brandName": "公司",
+                        "cityName": "武汉",
+                    }
+                ]
+            },
+        }
         client = Mock()
         client.request_page.side_effect = [payload, RuntimeError("network")]
         repository = Mock()

@@ -3,15 +3,14 @@ import json
 import time
 import urllib.parse
 from datetime import datetime
-from pathlib import Path
 
 import requests
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from utils.iv8_silent import import_iv8_silent
-from utils.logger import logger
+from boss_zhipin.domain.filtering import extract_jobs as extract_typed_jobs
+from boss_zhipin.models import SearchCriteria
 from runtime_paths import (
     CACHE_DIR,
     COOKIE_FILE,
@@ -22,11 +21,8 @@ from runtime_paths import (
     LEGACY_EXCEL_FILE,
     OUTPUT_DIR,
 )
-from boss_zhipin.domain.filtering import extract_jobs as extract_typed_jobs
-from boss_zhipin.domain.filtering import experience_max_years
-from boss_zhipin.domain.salary import parse_salary
-from boss_zhipin.models import SearchCriteria
-
+from utils.iv8_silent import import_iv8_silent
+from utils.logger import logger
 
 START_PAGE = 1
 PAGE_COUNT = 5
@@ -42,8 +38,21 @@ PAGE_URL = f"https://www.zhipin.com/web/geek/jobs?query={urllib.parse.quote(KEYW
 API_URL = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
 
 HEADERS = [
-    "抓取日期", "首次发现", "是否新增", "职位", "公司", "薪资", "最低薪资(K)",
-    "最高薪资(K)", "经验", "学历", "地点", "招聘者", "技能", "职位链接", "职位ID",
+    "抓取日期",
+    "首次发现",
+    "是否新增",
+    "职位",
+    "公司",
+    "薪资",
+    "最低薪资(K)",
+    "最高薪资(K)",
+    "经验",
+    "学历",
+    "地点",
+    "招聘者",
+    "技能",
+    "职位链接",
+    "职位ID",
 ]
 
 
@@ -93,8 +102,7 @@ def load_cookies():
                 cookies[name] = value
     else:
         raise FileNotFoundError(
-            f"缺少 {COOKIE_TEXT_FILE.name} 或 {COOKIE_FILE.name}。"
-            "请运行 ./login.sh 完成登录并自动生成 Cookie。"
+            f"缺少 {COOKIE_TEXT_FILE.name} 或 {COOKIE_FILE.name}。请运行 ./login.sh 完成登录并自动生成 Cookie。"
         )
 
     if not cookies or any("替换为" in value for value in cookies.values()):
@@ -172,8 +180,12 @@ def build_security_environment(security_url):
             "webdriver": False,
         },
         "screen": {
-            "width": 1920, "height": 1080, "availWidth": 1920,
-            "availHeight": 1040, "colorDepth": 24, "pixelDepth": 24,
+            "width": 1920,
+            "height": 1080,
+            "availWidth": 1920,
+            "availHeight": 1040,
+            "colorDepth": 24,
+            "pixelDepth": 24,
         },
         "window": {"origin": "https://www.zhipin.com", "devicePixelRatio": 1},
         "canvas": {
@@ -203,7 +215,9 @@ def compute_stoken(session, challenge):
     snapshot = {"baseURL": security_url, "html": html, "headers": [], "resources": {js_url: js_code}}
 
     iv8 = import_iv8_silent()
-    with iv8.JSContext(environment=build_security_environment(security_url), config={"timezone": "Asia/Shanghai"}) as ctx:
+    with iv8.JSContext(
+        environment=build_security_environment(security_url), config={"timezone": "Asia/Shanghai"}
+    ) as ctx:
         ctx.expose(snapshot, "snapshot")
         ctx.eval("window.__iv8__.page.load(window.__iv8__.data.snapshot)")
         ctx.eval("window.__iv8__.eventLoop.sleep(100)")
@@ -236,6 +250,7 @@ def request_page(session, page):
 def extract_jobs(payload):
     criteria = SearchCriteria(KEYWORD, CITY_CODE, MIN_SALARY_K, MAX_EXPERIENCE_YEARS)
     return [job.to_dict() for job in extract_typed_jobs(payload, criteria)]
+
 
 def load_or_create_workbook():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -291,9 +306,21 @@ def save_jobs(jobs):
             is_new = "是"
             new_count += 1
         values = [
-            job["fetched_at"], first_seen, is_new, job["job_name"], job["company"],
-            job["salary"], job["salary_low"], job["salary_high"], job["experience"],
-            job["degree"], job["location"], job["boss"], job["skills"], job["url"], key,
+            job["fetched_at"],
+            first_seen,
+            is_new,
+            job["job_name"],
+            job["company"],
+            job["salary"],
+            job["salary_low"],
+            job["salary_high"],
+            job["experience"],
+            job["degree"],
+            job["location"],
+            job["boss"],
+            job["skills"],
+            job["url"],
+            key,
         ]
         for col, value in enumerate(values, 1):
             sheet.cell(row, col).value = value

@@ -4,7 +4,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = ROOT / ".venv" / "bin" / "python"
 ENV = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
@@ -38,9 +37,10 @@ class CliTests(unittest.TestCase):
 
         from boss_zhipin import cli
 
-        with patch("boss_jobs.load_cookies", return_value={"zp_at": "token"}), patch(
-            "boss_zhipin.application.collect_jobs.collect_jobs"
-        ) as collect:
+        with (
+            patch("boss_jobs.load_cookies", return_value={"zp_at": "token"}),
+            patch("boss_zhipin.application.collect_jobs.collect_jobs") as collect,
+        ):
             collect.return_value = type("Result", (), {"matched_count": 0, "new_count": 0})()
             result = cli.main(["collect", "--page-count", "1"])
 

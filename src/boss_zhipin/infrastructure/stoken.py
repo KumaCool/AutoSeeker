@@ -24,13 +24,32 @@ class StokenService:
     def environment(self, security_url):
         parsed = urllib.parse.urlparse(security_url)
         return {
-            "location": {"href": security_url, "origin": "https://www.zhipin.com", "protocol": "https:",
-                         "host": "www.zhipin.com", "hostname": "www.zhipin.com", "port": "",
-                         "pathname": parsed.path, "search": f"?{parsed.query}" if parsed.query else "", "hash": ""},
-            "navigator": {"userAgent": self.user_agent, "platform": "MacIntel", "language": "zh-CN",
-                          "languages": ["zh-CN", "zh", "en"], "webdriver": False},
-            "screen": {"width": 1920, "height": 1080, "availWidth": 1920, "availHeight": 1040,
-                       "colorDepth": 24, "pixelDepth": 24},
+            "location": {
+                "href": security_url,
+                "origin": "https://www.zhipin.com",
+                "protocol": "https:",
+                "host": "www.zhipin.com",
+                "hostname": "www.zhipin.com",
+                "port": "",
+                "pathname": parsed.path,
+                "search": f"?{parsed.query}" if parsed.query else "",
+                "hash": "",
+            },
+            "navigator": {
+                "userAgent": self.user_agent,
+                "platform": "MacIntel",
+                "language": "zh-CN",
+                "languages": ["zh-CN", "zh", "en"],
+                "webdriver": False,
+            },
+            "screen": {
+                "width": 1920,
+                "height": 1080,
+                "availWidth": 1920,
+                "availHeight": 1040,
+                "colorDepth": 24,
+                "pixelDepth": 24,
+            },
             "window": {"origin": "https://www.zhipin.com", "devicePixelRatio": 1},
             "canvas": {"fingerprint": {"toDataURL": {"png": "data:image/png;base64,iVBORw0KGgo="}}},
         }
@@ -39,12 +58,15 @@ class StokenService:
         from utils.iv8_silent import import_iv8_silent
 
         js_url = f"https://www.zhipin.com/web/common/security-js/{name}.js"
-        response = self.session.get(js_url, headers={"user-agent": self.user_agent, "referer": self.page_url}, timeout=self.timeout)
+        response = self.session.get(
+            js_url, headers={"user-agent": self.user_agent, "referer": self.page_url}, timeout=self.timeout
+        )
         response.raise_for_status()
         js_code = response.text
         self.save_text(f"zhipin_security_{name}.js", js_code)
         security_url = "https://www.zhipin.com/web/common/security-check.html?" + urllib.parse.urlencode(
-            {"seed": seed, "name": name, "ts": str(ts), "callbackUrl": "", "srcReferer": self.page_url})
+            {"seed": seed, "name": name, "ts": str(ts), "callbackUrl": "", "srcReferer": self.page_url}
+        )
         html = f'<html><head><meta charset="utf-8"></head><body><script src="{js_url}"></script></body></html>'
         self.save_text("zhipin_security_check.html", html)
         snapshot = {"baseURL": security_url, "html": html, "headers": [], "resources": {js_url: js_code}}

@@ -2,7 +2,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from boss_zhipin.auth import AuthError, import_cookies, validate_cookies
 
@@ -13,11 +13,16 @@ class AuthServiceTests(unittest.TestCase):
             root = Path(directory)
             source = root / "source.json"
             destination = root / "secrets" / "cookies.json"
-            source.write_text(json.dumps([
-                {"name": "zp_at", "value": "token", "domain": ".zhipin.com"},
-                {"name": "wt2", "value": "visitor", "domain": "www.zhipin.com"},
-                {"name": "other", "value": "secret", "domain": ".example.com"},
-            ]), encoding="utf-8")
+            source.write_text(
+                json.dumps(
+                    [
+                        {"name": "zp_at", "value": "token", "domain": ".zhipin.com"},
+                        {"name": "wt2", "value": "visitor", "domain": "www.zhipin.com"},
+                        {"name": "other", "value": "secret", "domain": ".example.com"},
+                    ]
+                ),
+                encoding="utf-8",
+            )
 
             count = import_cookies(source, destination)
             payload = json.loads(destination.read_text(encoding="utf-8"))

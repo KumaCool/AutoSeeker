@@ -3,6 +3,7 @@ import sys
 try:
     from loguru import logger
 except ImportError:
+
     class PrintLogger:
         @staticmethod
         def info(message, *args):
