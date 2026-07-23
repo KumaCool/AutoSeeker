@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from boss_zhipin.config import ConfigError, load_config
+from auto_seeker.config import ConfigError, load_config
 
 
 class ConfigTests(unittest.TestCase):
@@ -22,7 +22,7 @@ class ConfigTests(unittest.TestCase):
     def test_config_show_works_outside_repository(self):
         with tempfile.TemporaryDirectory() as directory:
             result = subprocess.run(
-                [str(Path(__file__).resolve().parents[1] / ".venv/bin/boss-zhipin"), "config", "show"],
+                [str(Path(__file__).resolve().parents[1] / ".venv/bin/autoseeker"), "config", "show"],
                 cwd=directory,
                 capture_output=True,
                 text=True,
@@ -36,20 +36,20 @@ class ConfigTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "config.toml"
             path.write_text('[search]\nkeyword = "Python"\npage_count = 2\n', encoding="utf-8")
-            with patch.dict(os.environ, {"BOSS_KEYWORD": "Go", "BOSS_PAGE_COUNT": "3"}, clear=False):
+            with patch.dict(os.environ, {"AUTOSEEKER_KEYWORD": "Go", "AUTOSEEKER_PAGE_COUNT": "3"}, clear=False):
                 config = load_config(path)
 
         self.assertEqual(config.search.keyword, "Go")
         self.assertEqual(config.search.page_count, 3)
 
     def test_explicit_overrides_have_highest_priority(self):
-        with patch.dict(os.environ, {"BOSS_KEYWORD": "Go"}, clear=False):
+        with patch.dict(os.environ, {"AUTOSEEKER_KEYWORD": "Go"}, clear=False):
             config = load_config(overrides={"search.keyword": "Rust"})
 
         self.assertEqual(config.search.keyword, "Rust")
 
     def test_invalid_positive_number_fails_before_use(self):
-        with patch.dict(os.environ, {"BOSS_PAGE_COUNT": "0"}, clear=False):
+        with patch.dict(os.environ, {"AUTOSEEKER_PAGE_COUNT": "0"}, clear=False):
             with self.assertRaises(ConfigError):
                 load_config()
 

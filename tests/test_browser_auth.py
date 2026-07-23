@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from boss_zhipin import browser_auth
+from auto_seeker import browser_auth
 
 
 class BrowserAuthTests(unittest.TestCase):

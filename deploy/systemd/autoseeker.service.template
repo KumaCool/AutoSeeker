@@ -1,5 +1,5 @@
 [Unit]
-Description=BOSS Zhipin daily job collection
+Description=AutoSeeker daily job collection
 After=network-online.target
 Wants=network-online.target
 

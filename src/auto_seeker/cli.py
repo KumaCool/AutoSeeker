@@ -2,11 +2,11 @@ import argparse
 import json
 from collections.abc import Sequence
 
-from boss_zhipin import __version__
+from auto_seeker import __version__
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(prog="boss-zhipin", description="BOSS 直聘职位筛选工具")
+    parser = argparse.ArgumentParser(prog="autoseeker", description="AutoSeeker 自动职位发现与筛选工具")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--config", help="TOML 配置文件路径")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -30,13 +30,13 @@ def main(argv: Sequence[str] | None = None):
     if args.command == "collect":
         import requests
 
-        from boss_zhipin.application.collect_jobs import collect_jobs
-        from boss_zhipin.auth import load_cookie_file
-        from boss_zhipin.config import PROJECT_ROOT, load_config
-        from boss_zhipin.infrastructure.boss_client import BossClient
-        from boss_zhipin.infrastructure.excel_repository import ExcelJobRepository
-        from boss_zhipin.infrastructure.stoken import StokenService
-        from boss_zhipin.models import SearchCriteria
+        from auto_seeker.application.collect_jobs import collect_jobs
+        from auto_seeker.auth import load_cookie_file
+        from auto_seeker.config import PROJECT_ROOT, load_config
+        from auto_seeker.infrastructure.boss_client import BossClient
+        from auto_seeker.infrastructure.excel_repository import ExcelJobRepository
+        from auto_seeker.infrastructure.stoken import StokenService
+        from auto_seeker.models import SearchCriteria
 
         config = load_config(
             args.config,
@@ -84,8 +84,8 @@ def main(argv: Sequence[str] | None = None):
         print(f"保存完成：符合条件={result.matched_count} 新增={result.new_count} Excel={output_path}")
         return 0
     if args.command == "auth":
-        from boss_zhipin.auth import check_cookies, import_cookies
-        from boss_zhipin.config import PROJECT_ROOT, load_config
+        from auto_seeker.auth import check_cookies, import_cookies
+        from auto_seeker.config import PROJECT_ROOT, load_config
 
         config = load_config(args.config)
         cookie_path = config.runtime.cookie_file
@@ -102,7 +102,7 @@ def main(argv: Sequence[str] | None = None):
     if args.command == "config" and args.config_command == "show":
         from dataclasses import asdict
 
-        from boss_zhipin.config import load_config
+        from auto_seeker.config import load_config
 
         payload = asdict(load_config(args.config))
         payload["runtime"]["cookie_file"] = "<redacted-path>"

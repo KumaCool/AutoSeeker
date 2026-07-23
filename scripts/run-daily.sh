@@ -14,14 +14,14 @@ started_at=%s
 work_dir=%s
 ' "$RUN_ID" "$(date '+%Y-%m-%d %H:%M:%S %Z')" "$ROOT" >> "$LATEST_LOG"
 
-if [ ! -x "$ROOT/.venv/bin/boss-zhipin" ]; then
+if [ ! -x "$ROOT/.venv/bin/autoseeker" ]; then
   echo "缺少已安装 CLI，请先运行 scripts/setup.sh" | tee -a "$LATEST_LOG" >&2
   echo "exit_code=1" > "$EXIT_FILE"
   cp "$LATEST_LOG" "$ARCHIVE_LOG"
   exit 1
 fi
 
-"$ROOT/.venv/bin/boss-zhipin" collect >> "$LATEST_LOG" 2>&1
+"$ROOT/.venv/bin/autoseeker" collect >> "$LATEST_LOG" 2>&1
 RUN_EXIT=$?
 printf 'finished_at=%s
 exit_code=%s

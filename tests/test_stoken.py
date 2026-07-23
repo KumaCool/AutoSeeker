@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
-from boss_zhipin.infrastructure.stoken import SecurityChallengeError, StokenService
+from auto_seeker.infrastructure.stoken import SecurityChallengeError, StokenService
 
 
 class StokenServiceTests(unittest.TestCase):

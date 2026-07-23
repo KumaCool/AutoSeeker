@@ -9,12 +9,12 @@
 从高到低：
 
 1. CLI 参数（仅适合本次运行的非敏感覆盖）。
-2. `BOSS_*` 环境变量。
+2. `AUTOSEEKER_*` 环境变量。
 3. 用户指定的 TOML 文件。
 4. `config/default.toml`。
 5. 程序内安全默认值。
 
-程序应提供 `boss-zhipin config show` 显示最终配置来源，但所有敏感值只显示 `<redacted>`。
+程序应提供 `autoseeker config show` 显示最终配置来源，但所有敏感值只显示 `<redacted>`。
 
 ## 3. 建议配置文件
 
@@ -36,7 +36,7 @@ timeout_seconds = 30
 max_security_refreshes = 1
 
 [storage]
-database = "var/data/boss-zhipin.sqlite3"
+database = "var/data/autoseeker.sqlite3"
 
 [web]
 host = "127.0.0.1"
@@ -56,7 +56,7 @@ cache_dir = "var/cache"
 Cookie 不写入 TOML，也不建议直接存入环境变量。仅配置 Cookie 文件路径：
 
 ```bash
-export BOSS_COOKIE_FILE="$PWD/var/secrets/cookies.json"
+export AUTOSEEKER_COOKIE_FILE="$PWD/var/secrets/cookies.json"
 ```
 
 Cookie 文件要求：
@@ -84,13 +84,13 @@ Cookie 文件要求：
 ## 7. 命令示例
 
 ```bash
-uv run boss-zhipin collect
-uv run boss-zhipin web
-uv run boss-zhipin export excel
-uv run boss-zhipin collect --keyword 前端 --city-code 101200100 --page-count 5
-uv run boss-zhipin --config config/default.toml config show
-uv run boss-zhipin auth import ~/Downloads/cookies.json
-uv run boss-zhipin auth check
+uv run autoseeker collect
+uv run autoseeker web
+uv run autoseeker export excel
+uv run autoseeker collect --keyword 前端 --city-code 101200100 --page-count 5
+uv run autoseeker --config config/default.toml config show
+uv run autoseeker auth import ~/Downloads/cookies.json
+uv run autoseeker auth check
 ```
 
 CLI 不能接收 Cookie 原文参数，以免进入 shell history 和进程列表。

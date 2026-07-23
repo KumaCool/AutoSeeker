@@ -1,8 +1,8 @@
 import re
 from datetime import datetime
 
-from boss_zhipin.domain.salary import parse_salary
-from boss_zhipin.models import Job
+from auto_seeker.domain.salary import parse_salary
+from auto_seeker.models import Job
 
 
 def experience_max_years(text):

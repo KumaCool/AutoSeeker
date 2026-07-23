@@ -1,8 +1,8 @@
 import unittest
 
-from boss_zhipin.domain.filtering import experience_max_years, extract_jobs
-from boss_zhipin.domain.salary import parse_salary
-from boss_zhipin.models import SearchCriteria
+from auto_seeker.domain.filtering import experience_max_years, extract_jobs
+from auto_seeker.domain.salary import parse_salary
+from auto_seeker.models import SearchCriteria
 
 
 class DomainTests(unittest.TestCase):

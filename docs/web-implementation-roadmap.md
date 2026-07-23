@@ -27,7 +27,7 @@
 创建：
 
 ```text
-src/boss_zhipin/infrastructure/sqlite_repository.py
+src/auto_seeker/infrastructure/sqlite_repository.py
 tests/test_sqlite_repository.py
 ```
 
@@ -61,10 +61,10 @@ tests/test_sqlite_repository.py
 修改：
 
 ```text
-src/boss_zhipin/application/collect_jobs.py
-src/boss_zhipin/cli.py
-src/boss_zhipin/config.py
-src/boss_zhipin/default.toml
+src/auto_seeker/application/collect_jobs.py
+src/auto_seeker/cli.py
+src/auto_seeker/config.py
+src/auto_seeker/default.toml
 config/default.toml
 ```
 
@@ -79,7 +79,7 @@ config/default.toml
 创建：
 
 ```text
-src/boss_zhipin/application/query_jobs.py
+src/auto_seeker/application/query_jobs.py
 tests/test_query_jobs.py
 ```
 
@@ -97,7 +97,7 @@ tests/test_query_jobs.py
 
 增加依赖：FastAPI、Uvicorn、Jinja2。
 
-创建 `src/boss_zhipin/web/`，实现 app factory、静态文件、模板和 `/health`。健康检查不得访问 BOSS。
+创建 `src/auto_seeker/web/`，实现 app factory、静态文件、模板和 `/health`。健康检查不得访问 BOSS。
 
 ### TASK C.2 职位列表
 
@@ -116,7 +116,7 @@ tests/test_query_jobs.py
 增加：
 
 ```bash
-boss-zhipin web --host 127.0.0.1 --port 8080
+autoseeker web --host 127.0.0.1 --port 8080
 ```
 
 默认不绑定 `0.0.0.0`。CLI 参数可覆盖 TOML。
@@ -134,7 +134,7 @@ boss-zhipin web --host 127.0.0.1 --port 8080
 增加：
 
 ```bash
-boss-zhipin export excel [--output PATH]
+autoseeker export excel [--output PATH]
 ```
 
 测试默认路径、自定义路径、15 列、超链接、空数据和原子保存。只有显式命令才生成 Excel。

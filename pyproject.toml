@@ -1,7 +1,7 @@
 [project]
-name = "boss-zhipin-jobs"
+name = "autoseeker"
 version = "1.0.0"
-description = "Local BOSS Zhipin job search and Excel export automation"
+description = "AutoSeeker job discovery, filtering, web display, and export automation"
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
 dependencies = [
@@ -20,7 +20,7 @@ dev = [
 ]
 
 [project.scripts]
-boss-zhipin = "boss_zhipin.cli:main"
+autoseeker = "auto_seeker.cli:main"
 
 [tool.uv]
 package = true
@@ -30,7 +30,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/boss_zhipin"]
+packages = ["src/auto_seeker"]
 
 [tool.ruff]
 line-length = 120

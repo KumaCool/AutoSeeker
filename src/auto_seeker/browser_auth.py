@@ -9,7 +9,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from boss_zhipin.config import PROJECT_ROOT
+from auto_seeker.config import PROJECT_ROOT
 
 COOKIE_FILE = PROJECT_ROOT / "var/secrets/cookies.json"
 LOG_DIR = PROJECT_ROOT / "var/logs"

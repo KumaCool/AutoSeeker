@@ -12,7 +12,7 @@ ENV = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
 class CliTests(unittest.TestCase):
     def run_cli(self, *arguments):
         return subprocess.run(
-            [str(PYTHON), "-m", "boss_zhipin.cli", *arguments],
+            [str(PYTHON), "-m", "auto_seeker.cli", *arguments],
             cwd=ROOT,
             env=ENV,
             capture_output=True,
@@ -33,11 +33,11 @@ class CliTests(unittest.TestCase):
         self.assertIn("1.0.0", result.stdout)
 
     def test_collect_uses_packaged_cookie_loader(self):
-        from boss_zhipin import cli
+        from auto_seeker import cli
 
         with (
-            patch("boss_zhipin.auth.load_cookie_file", return_value={"zp_at": "token"}) as loader,
-            patch("boss_zhipin.application.collect_jobs.collect_jobs") as collect,
+            patch("auto_seeker.auth.load_cookie_file", return_value={"zp_at": "token"}) as loader,
+            patch("auto_seeker.application.collect_jobs.collect_jobs") as collect,
         ):
             collect.return_value = type("Result", (), {"matched_count": 0, "new_count": 0})()
             result = cli.main(["collect", "--page-count", "1"])

@@ -7,7 +7,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
-from boss_zhipin.models import Job
+from auto_seeker.models import Job
 
 HEADERS = [
     "抓取日期",

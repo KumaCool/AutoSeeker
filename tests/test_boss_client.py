@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import Mock
 
-from boss_zhipin.infrastructure.boss_client import BossApiError, BossClient
-from boss_zhipin.models import SearchCriteria
+from auto_seeker.infrastructure.boss_client import BossApiError, BossClient
+from auto_seeker.models import SearchCriteria
 
 
 class BossClientTests(unittest.TestCase):

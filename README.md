@@ -1,4 +1,4 @@
-# BOSS 直聘职位筛选
+# AutoSeeker
 
 模块化 Python CLI：查询 BOSS 直聘职位，按薪资和经验筛选，并增量写入 Excel。
 
@@ -10,26 +10,26 @@
 
 ```bash
 ./scripts/setup.sh
-.venv/bin/boss-zhipin --help
+.venv/bin/autoseeker --help
 ```
 
 导入本人合法登录会话的 BOSS Cookie：
 
 ```bash
-.venv/bin/boss-zhipin auth import /path/to/cookies.json
-.venv/bin/boss-zhipin auth check
+.venv/bin/autoseeker auth import /path/to/cookies.json
+.venv/bin/autoseeker auth check
 ```
 
 运行采集：
 
 ```bash
-.venv/bin/boss-zhipin collect
+.venv/bin/autoseeker collect
 ```
 
 临时覆盖搜索条件：
 
 ```bash
-.venv/bin/boss-zhipin collect \
+.venv/bin/autoseeker collect \
   --keyword 前端 \
   --city-code 101200100 \
   --page-count 5
@@ -38,7 +38,7 @@
 查看生效配置（Cookie 路径会脱敏）：
 
 ```bash
-.venv/bin/boss-zhipin config show
+.venv/bin/autoseeker config show
 ```
 
 ## 配置与输出
@@ -69,7 +69,7 @@ macOS launchd：
 ./scripts/macos/install-launchd.sh
 ```
 
-两者都调用相同的 `scripts/run-daily.sh` 和 `boss-zhipin collect`。各辅助目录的用途见其 `README.md`。
+两者都调用相同的 `scripts/run-daily.sh` 和 `autoseeker collect`。各辅助目录的用途见其 `README.md`。
 
 ## 开发验证
 

@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
-from boss_zhipin.auth import AuthError, import_cookies, load_cookie_file, validate_cookies
+from auto_seeker.auth import AuthError, import_cookies, load_cookie_file, validate_cookies
 
 
 class AuthServiceTests(unittest.TestCase):
@@ -82,7 +82,7 @@ class AuthServiceTests(unittest.TestCase):
         self.assertEqual(cookies, {"zp_at": "legacy", "wt2": "visitor"})
 
     def test_check_uses_minimal_single_page_request(self):
-        from boss_zhipin import auth
+        from auto_seeker import auth
 
         response = Mock()
         response.raise_for_status.return_value = None

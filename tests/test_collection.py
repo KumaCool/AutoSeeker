@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import Mock
 
-from boss_zhipin.application.collect_jobs import CollectionError, collect_jobs
-from boss_zhipin.models import SearchCriteria
+from auto_seeker.application.collect_jobs import CollectionError, collect_jobs
+from auto_seeker.models import SearchCriteria
 
 
 class CollectionTests(unittest.TestCase):

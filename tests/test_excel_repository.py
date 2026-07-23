@@ -4,8 +4,8 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 
-from boss_zhipin.infrastructure.excel_repository import HEADERS, ExcelJobRepository
-from boss_zhipin.models import Job
+from auto_seeker.infrastructure.excel_repository import HEADERS, ExcelJobRepository
+from auto_seeker.models import Job
 
 
 class ExcelRepositoryTests(unittest.TestCase):

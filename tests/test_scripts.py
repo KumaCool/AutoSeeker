@@ -14,12 +14,12 @@ class ProjectLayoutTests(unittest.TestCase):
     def test_macos_scripts_are_grouped(self):
         login = (ROOT / "scripts/macos/login.sh").read_text(encoding="utf-8")
         installer = (ROOT / "scripts/macos/install-launchd.sh").read_text(encoding="utf-8")
-        self.assertIn("-m boss_zhipin.browser_auth", login)
-        self.assertIn("deploy/launchd/boss-zhipin.plist.template", installer)
+        self.assertIn("-m auto_seeker.browser_auth", login)
+        self.assertIn("deploy/launchd/autoseeker.plist.template", installer)
 
     def test_scheduler_templates_use_run_daily_script(self):
-        service = (ROOT / "deploy/systemd/boss-zhipin.service.template").read_text(encoding="utf-8")
-        launchd = (ROOT / "deploy/launchd/boss-zhipin.plist.template").read_text(encoding="utf-8")
+        service = (ROOT / "deploy/systemd/autoseeker.service.template").read_text(encoding="utf-8")
+        launchd = (ROOT / "deploy/launchd/autoseeker.plist.template").read_text(encoding="utf-8")
         self.assertIn("__WORK_DIR__/scripts/run-daily.sh", service)
         self.assertIn("__RUN_SCRIPT__", launchd)
 

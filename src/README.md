@@ -1,6 +1,6 @@
 # Source Code
 
-正式 Python 包位于 `src/boss_zhipin/`。
+正式 Python 包位于 `src/auto_seeker/`。
 
 - `domain/`：职位模型、薪资与经验筛选规则。
 - `application/`：采集流程编排。

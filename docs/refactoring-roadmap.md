@@ -45,12 +45,12 @@
 
 ## 4. 阶段 2：Python 包、配置和 CLI
 
-**目标**：建立 `src/boss_zhipin/` 和唯一稳定入口，暂不深拆业务。
+**目标**：建立 `src/auto_seeker/` 和唯一稳定入口，暂不深拆业务。
 
 ### TASK 2.1 建立 src 包和 CLI 骨架
 
 - 配置 `pyproject.toml` 的 console script。
-- 实现 `boss-zhipin --help`、版本和明确退出码。
+- 实现 `autoseeker --help`、版本和明确退出码。
 - 旧脚本暂作为兼容入口调用新 CLI。
 
 ### TASK 2.2 引入类型化配置
@@ -150,7 +150,7 @@
 ## 9. 完成定义
 
 - 项目可通过 `uv sync --locked` 安装。
-- `boss-zhipin` CLI 是唯一推荐入口。
+- `autoseeker` CLI 是唯一推荐入口。
 - Linux 与 macOS 核心采集路径一致。
 - 默认测试完全离线且不读取真实 Cookie。
 - Cookie、缓存、日志和输出与源码隔离且不被 Git 跟踪。

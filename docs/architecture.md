@@ -23,13 +23,13 @@
 ## 4. 目标目录
 
 ```text
-boss-zhipin-jobs/
+autoseeker/
 ├── README.md
 ├── pyproject.toml
 ├── uv.lock
 ├── .gitignore
 ├── .env.example
-├── src/boss_zhipin/
+├── src/auto_seeker/
 │   ├── __init__.py
 │   ├── cli.py
 │   ├── config.py
@@ -88,12 +88,12 @@ boss-zhipin-jobs/
 建议命令：
 
 ```text
-boss-zhipin collect
-boss-zhipin web
-boss-zhipin export excel
-boss-zhipin auth import <file>
-boss-zhipin auth check
-boss-zhipin config show
+autoseeker collect
+autoseeker web
+autoseeker export excel
+autoseeker auth import <file>
+autoseeker auth check
+autoseeker config show
 ```
 
 ### 应用层：`application/collect_jobs.py`

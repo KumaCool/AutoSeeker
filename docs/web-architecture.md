@@ -123,14 +123,14 @@ JSON API ──────┘
 同一个 Python 包提供两个命令，运行成两个进程：
 
 ```text
-boss-zhipin web       # 长期运行，只读展示
-boss-zhipin collect   # 定时执行，写 SQLite
+autoseeker web       # 长期运行，只读展示
+autoseeker collect   # 定时执行，写 SQLite
 ```
 
 共享数据库：
 
 ```text
-var/data/boss-zhipin.sqlite3
+var/data/autoseeker.sqlite3
 ```
 
 SQLite 启用 WAL 与 busy timeout，使 Web 读取和采集写入可安全共存：

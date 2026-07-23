@@ -1,7 +1,7 @@
 import time
 from dataclasses import dataclass
 
-from boss_zhipin.domain.filtering import extract_jobs
+from auto_seeker.domain.filtering import extract_jobs
 
 
 class CollectionError(RuntimeError):

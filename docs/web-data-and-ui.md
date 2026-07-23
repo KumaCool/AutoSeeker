@@ -19,7 +19,7 @@
 ## 2. 数据库位置
 
 ```text
-var/data/boss-zhipin.sqlite3
+var/data/autoseeker.sqlite3
 ```
 
 `var/` 整体排除版本控制。数据库连接初始化：
@@ -196,7 +196,7 @@ GET /health
 ## 7. Web 目录
 
 ```text
-src/boss_zhipin/web/
+src/auto_seeker/web/
 ├── __init__.py
 ├── app.py
 ├── dependencies.py
@@ -223,8 +223,8 @@ src/boss_zhipin/web/
 CLI：
 
 ```bash
-boss-zhipin export excel
-boss-zhipin export excel --output ~/Downloads/jobs.xlsx
+autoseeker export excel
+autoseeker export excel --output ~/Downloads/jobs.xlsx
 ```
 
 默认：
@@ -241,7 +241,7 @@ var/exports/wuhan-frontend-jobs.xlsx
 
 ```toml
 [storage]
-database = "var/data/boss-zhipin.sqlite3"
+database = "var/data/autoseeker.sqlite3"
 
 [web]
 host = "127.0.0.1"

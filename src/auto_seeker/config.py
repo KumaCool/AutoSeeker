@@ -5,7 +5,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
-PROJECT_ROOT = Path(os.environ.get("BOSS_PROJECT_ROOT", Path.cwd())).resolve()
+PROJECT_ROOT = Path(os.environ.get("AUTOSEEKER_PROJECT_ROOT", Path.cwd())).resolve()
 
 
 class ConfigError(ValueError):
@@ -51,17 +51,17 @@ class AppConfig:
 
 
 ENV_KEYS = {
-    "BOSS_KEYWORD": "search.keyword",
-    "BOSS_CITY_CODE": "search.city_code",
-    "BOSS_START_PAGE": "search.start_page",
-    "BOSS_PAGE_COUNT": "search.page_count",
-    "BOSS_PAGE_SIZE": "search.page_size",
-    "BOSS_MINIMUM_SALARY_K": "search.minimum_salary_k",
-    "BOSS_MAXIMUM_EXPERIENCE_YEARS": "search.maximum_experience_years",
-    "BOSS_REQUEST_INTERVAL_SECONDS": "request.interval_seconds",
-    "BOSS_REQUEST_TIMEOUT_SECONDS": "request.timeout_seconds",
-    "BOSS_COOKIE_FILE": "runtime.cookie_file",
-    "BOSS_OUTPUT_FILE": "output.path",
+    "AUTOSEEKER_KEYWORD": "search.keyword",
+    "AUTOSEEKER_CITY_CODE": "search.city_code",
+    "AUTOSEEKER_START_PAGE": "search.start_page",
+    "AUTOSEEKER_PAGE_COUNT": "search.page_count",
+    "AUTOSEEKER_PAGE_SIZE": "search.page_size",
+    "AUTOSEEKER_MINIMUM_SALARY_K": "search.minimum_salary_k",
+    "AUTOSEEKER_MAXIMUM_EXPERIENCE_YEARS": "search.maximum_experience_years",
+    "AUTOSEEKER_REQUEST_INTERVAL_SECONDS": "request.interval_seconds",
+    "AUTOSEEKER_REQUEST_TIMEOUT_SECONDS": "request.timeout_seconds",
+    "AUTOSEEKER_COOKIE_FILE": "runtime.cookie_file",
+    "AUTOSEEKER_OUTPUT_FILE": "output.path",
 }
 
 
@@ -95,7 +95,7 @@ def _positive(name: str, value: int | float):
 
 
 def load_config(path: str | Path | None = None, overrides: dict[str, Any] | None = None):
-    with files("boss_zhipin").joinpath("default.toml").open("rb") as stream:
+    with files("auto_seeker").joinpath("default.toml").open("rb") as stream:
         data = tomllib.load(stream)
     if path is not None:
         with Path(path).open("rb") as stream:
