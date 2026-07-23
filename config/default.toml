@@ -1,0 +1,21 @@
+[search]
+keyword = "前端"
+city_code = "101200100"
+start_page = 1
+page_count = 5
+page_size = 30
+minimum_salary_k = 15
+maximum_experience_years = 3
+
+[request]
+interval_seconds = 1.5
+timeout_seconds = 30
+max_security_refreshes = 1
+
+[output]
+path = "var/outputs/wuhan-frontend-jobs.xlsx"
+
+[runtime]
+cache_dir = "var/cache/security-js"
+log_dir = "var/logs"
+cookie_file = "var/secrets/cookies.json"

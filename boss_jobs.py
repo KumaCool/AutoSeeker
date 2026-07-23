@@ -44,6 +44,26 @@ HEADERS = [
 ]
 
 
+def apply_config(config):
+    global START_PAGE, PAGE_COUNT, PAGE_SIZE, KEYWORD, CITY_CODE
+    global MIN_SALARY_K, MAX_EXPERIENCE_YEARS, REQUEST_INTERVAL_SECONDS
+    global PAGE_URL, CACHE_DIR, COOKIE_FILE, EXCEL_FILE, OUTPUT_DIR
+
+    START_PAGE = config.search.start_page
+    PAGE_COUNT = config.search.page_count
+    PAGE_SIZE = config.search.page_size
+    KEYWORD = config.search.keyword
+    CITY_CODE = config.search.city_code
+    MIN_SALARY_K = config.search.minimum_salary_k
+    MAX_EXPERIENCE_YEARS = config.search.maximum_experience_years
+    REQUEST_INTERVAL_SECONDS = config.request.interval_seconds
+    PAGE_URL = f"https://www.zhipin.com/web/geek/jobs?query={urllib.parse.quote(KEYWORD)}&city={CITY_CODE}"
+    CACHE_DIR = config.runtime.cache_dir
+    COOKIE_FILE = config.runtime.cookie_file
+    EXCEL_FILE = config.output.path
+    OUTPUT_DIR = EXCEL_FILE.parent
+
+
 def load_cookies():
     json_path = COOKIE_FILE if COOKIE_FILE.exists() else LEGACY_COOKIE_FILE
     text_path = COOKIE_TEXT_FILE if COOKIE_TEXT_FILE.exists() else LEGACY_COOKIE_TEXT_FILE

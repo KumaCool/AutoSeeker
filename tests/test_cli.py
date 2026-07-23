@@ -37,7 +37,7 @@ class CliTests(unittest.TestCase):
 
         from boss_zhipin import cli
 
-        with patch("boss_jobs.main") as legacy_main:
+        with patch("boss_jobs.main") as legacy_main, patch("boss_jobs.apply_config"):
             result = cli.main(["collect"])
 
         self.assertEqual(result, 0)
