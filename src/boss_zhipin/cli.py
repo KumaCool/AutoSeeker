@@ -40,7 +40,14 @@ def main(argv: Sequence[str] | None = None):
     if args.command == "collect":
         ensure_legacy_import_path()
         import boss_jobs
-        from boss_zhipin.config import load_config
+        import requests
+
+        from boss_zhipin.application.collect_jobs import collect_jobs
+        from boss_zhipin.config import PROJECT_ROOT, load_config
+        from boss_zhipin.infrastructure.boss_client import BossClient
+        from boss_zhipin.infrastructure.excel_repository import ExcelJobRepository
+        from boss_zhipin.infrastructure.stoken import StokenService
+        from boss_zhipin.models import SearchCriteria
 
         config = load_config(
             args.config,
@@ -51,8 +58,27 @@ def main(argv: Sequence[str] | None = None):
             },
         )
         boss_jobs.apply_config(config)
-
-        boss_jobs.main()
+        cookies = boss_jobs.load_cookies()
+        session = requests.Session()
+        session.cookies.update(cookies)
+        criteria = SearchCriteria(
+            config.search.keyword, config.search.city_code,
+            config.search.minimum_salary_k, config.search.maximum_experience_years,
+        )
+        client = BossClient(session, criteria, config.search.page_size, config.request.timeout_seconds)
+        cache_dir = config.runtime.cache_dir
+        output_path = config.output.path
+        if not cache_dir.is_absolute():
+            cache_dir = PROJECT_ROOT / cache_dir
+        if not output_path.is_absolute():
+            output_path = PROJECT_ROOT / output_path
+        stoken = StokenService(session, client.page_url, cache_dir, client.user_agent, client.timeout)
+        repository = ExcelJobRepository(output_path, PROJECT_ROOT / "outputs/wuhan-frontend-jobs.xlsx")
+        result = collect_jobs(
+            client, stoken, repository, criteria, config.search.start_page,
+            config.search.page_count, config.request.interval_seconds,
+        )
+        print(f"保存完成：符合条件={result.matched_count} 新增={result.new_count} Excel={output_path}")
         return 0
     if args.command == "auth":
         from boss_zhipin.auth import check_cookies, import_cookies

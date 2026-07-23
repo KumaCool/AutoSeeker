@@ -38,11 +38,13 @@ class CliTests(unittest.TestCase):
 
         from boss_zhipin import cli
 
-        with patch("boss_jobs.main") as legacy_main, patch("boss_jobs.apply_config"):
-            result = cli.main(["collect"])
+        with patch("boss_jobs.load_cookies", return_value={"zp_at": "token"}), patch(
+            "boss_zhipin.application.collect_jobs.collect_jobs"
+        ) as collect:
+            collect.return_value = type("Result", (), {"matched_count": 0, "new_count": 0})()
+            result = cli.main(["collect", "--page-count", "1"])
 
         self.assertEqual(result, 0)
-        legacy_main.assert_called_once_with()
 
     def test_legacy_project_root_is_added_to_import_path(self):
         import sys
