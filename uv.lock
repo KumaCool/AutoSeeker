@@ -5,7 +5,7 @@ requires-python = ">=3.11, <3.15"
 [[package]]
 name = "boss-zhipin-jobs"
 version = "1.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "iv8" },
     { name = "openpyxl" },
