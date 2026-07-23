@@ -32,11 +32,11 @@ chmod +x setup.sh login.sh run_daily.sh install_launchd.sh
 
 脚本会打开项目专属 Chrome，并通过本机 Chrome DevTools Protocol 检查登录状态。
 需要登录时只需扫码；检测到登录成功后会自动导出
-`zhipin.com` Cookie 到 `cookies.json`，关闭浏览器并继续生成 Excel。验证码或安全验证
+`zhipin.com` Cookie 到 `var/secrets/cookies.json`，关闭浏览器并继续生成 Excel。验证码或安全验证
 仍需人工完成，脚本不会绕过。
 
-浏览器登录状态保存在 `.browser-profile/`，不会读取日常 Chrome 的密码或其他站点
-数据。该目录和 `cookies.json` 均已从版本控制中排除。
+浏览器登录状态保存在 `var/browser-profile/`，不会读取日常 Chrome 的密码或其他站点
+数据。`var/` 已从版本控制中排除。阶段 1 仍兼容读取根目录旧 Cookie 和旧 Excel，但新数据只写入 `var/`。
 
 ## 运行
 
@@ -93,6 +93,10 @@ chmod +x setup.sh login.sh run_daily.sh install_launchd.sh
 
 测试覆盖薪资和经验解析、`encryptJobId` 详情链接、旧 `securityId` Excel 行迁移，
 以及登录 Cookie 的识别、域名过滤和文件权限。
+
+## 开发文档
+
+工程化目标、开发命令和分阶段实施计划位于 [`docs/`](docs/README.md)。
 
 ## 项目边界
 

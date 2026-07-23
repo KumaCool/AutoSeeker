@@ -1,4 +1,5 @@
 .venv/
+var/
 .browser-profile/
 cookies.json
 cookies.json.tmp
@@ -6,7 +7,16 @@ cookies.txt
 js_reverse_cache/
 logs/
 outputs/*.xlsx
+outputs/
 __pycache__/
 utils/__pycache__/
 .DS_Store
+.env
+.env.*
+!.env.example
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 work/
