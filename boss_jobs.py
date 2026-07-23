@@ -1,6 +1,5 @@
 # pyright: reportMissingImports=false
 import json
-import re
 import time
 import urllib.parse
 from datetime import datetime
@@ -23,6 +22,10 @@ from runtime_paths import (
     LEGACY_EXCEL_FILE,
     OUTPUT_DIR,
 )
+from boss_zhipin.domain.filtering import extract_jobs as extract_typed_jobs
+from boss_zhipin.domain.filtering import experience_max_years
+from boss_zhipin.domain.salary import parse_salary
+from boss_zhipin.models import SearchCriteria
 
 
 START_PAGE = 1
@@ -230,78 +233,9 @@ def request_page(session, page):
     return payload
 
 
-def parse_salary(text):
-    text = str(text or "").upper().replace(" ", "")
-    range_match = re.search(r"(\d+(?:\.\d+)?)K?-(\d+(?:\.\d+)?)K", text)
-    single_match = re.search(r"(\d+(?:\.\d+)?)K", text)
-    if range_match:
-        low, high = float(range_match.group(1)), float(range_match.group(2))
-    elif single_match:
-        low = high = float(single_match.group(1))
-    else:
-        return None, None
-    return low, high
-
-
-def experience_max_years(text):
-    text = str(text or "")
-    if any(word in text for word in ("经验不限", "不限", "应届", "在校")):
-        return 0
-    numbers = [int(value) for value in re.findall(r"\d+", text)]
-    if not numbers:
-        return None
-    if "以内" in text:
-        return numbers[0]
-    return max(numbers)
-
-
 def extract_jobs(payload):
-    zp_data = payload.get("zpData") or {}
-    raw_jobs = zp_data.get("jobList") or zp_data.get("list") or []
-    jobs = []
-    today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    for item in raw_jobs:
-        salary = item.get("salaryDesc") or item.get("salary") or ""
-        experience = item.get("jobExperience") or item.get("experienceName") or ""
-        salary_low, salary_high = parse_salary(salary)
-        max_years = experience_max_years(experience)
-        if salary_low is None or salary_low < MIN_SALARY_K:
-            continue
-        if max_years is None or max_years > MAX_EXPERIENCE_YEARS:
-            continue
-
-        # securityId is a request/security token, not the short ID accepted by
-        # /job_detail/{id}.html.
-        encrypt_job_id = str(item.get("encryptJobId") or "")
-        job_id = encrypt_job_id or str(item.get("jobId") or "")
-        url = item.get("jobUrl") or item.get("url") or ""
-        if url.startswith("/"):
-            url = "https://www.zhipin.com" + url
-        if not url and encrypt_job_id:
-            url = f"https://www.zhipin.com/job_detail/{encrypt_job_id}.html"
-        location = " ".join(filter(None, [
-            item.get("cityName"), item.get("areaDistrict"), item.get("businessDistrict"),
-        ]))
-        skills = item.get("skills") or item.get("jobLabels") or []
-        if isinstance(skills, list):
-            skills = "、".join(map(str, skills))
-        jobs.append({
-            "fetched_at": today,
-            "job_name": item.get("jobName") or item.get("positionName") or "",
-            "company": item.get("brandName") or item.get("companyName") or "",
-            "salary": salary,
-            "salary_low": salary_low,
-            "salary_high": salary_high,
-            "experience": experience,
-            "degree": item.get("jobDegree") or item.get("degreeName") or "",
-            "location": location,
-            "boss": item.get("bossName") or "",
-            "skills": skills,
-            "url": url,
-            "job_id": job_id or url,
-        })
-    return jobs
-
+    criteria = SearchCriteria(KEYWORD, CITY_CODE, MIN_SALARY_K, MAX_EXPERIENCE_YEARS)
+    return [job.to_dict() for job in extract_typed_jobs(payload, criteria)]
 
 def load_or_create_workbook():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
