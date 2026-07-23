@@ -2,7 +2,7 @@
 
 ## 1. 目标
 
-项目现已整理为可安装、可测试、跨平台运行的 Python 模块化单体。保持现有范围：读取 BOSS 职位列表、处理 `code=37`、按规则筛选并增量写入 Excel；不实现自动沟通、简历投递或验证码绕过。
+项目现已整理为可安装、可测试、跨平台运行的 Python 模块化单体。当前实现读取 BOSS 职位列表、处理 `code=37`、按规则筛选并增量写入 Excel。下一阶段目标改为 SQLite 权威存储、Web 默认展示和 Excel 按需导出，详见 [Web 架构决策](web-architecture.md)。
 
 ## 2. 当前问题
 
@@ -16,8 +16,8 @@
 
 - **模块化单体**：一个 Python 包、一个 CLI、一个进程。
 - **依赖向内**：领域层不依赖 requests、iv8、openpyxl。
-- **端口与适配器**：应用层定义所需能力，基础设施层实现 BOSS HTTP、认证和 Excel 存储。
-- **YAGNI**：暂不引入数据库、ORM、DI 容器、消息队列、Web UI 或插件系统。
+- **端口与适配器**：应用层定义所需能力，基础设施层实现 BOSS HTTP、认证、SQLite 存储和按需 Excel 导出。
+- **YAGNI**：下一阶段只引入 SQLite 和 FastAPI/Jinja2；不引入 ORM、DI 容器、消息队列、SPA 或插件系统。
 - **行为兼容**：重构前后对同一 fixture 的筛选、去重和输出含义一致。
 
 ## 4. 目标目录
@@ -35,7 +35,9 @@ boss-zhipin-jobs/
 │   ├── config.py
 │   ├── models.py
 │   ├── application/
-│   │   └── collect_jobs.py
+│   │   ├── collect_jobs.py
+│   │   ├── query_jobs.py
+│   │   └── export_jobs.py
 │   ├── domain/
 │   │   ├── filtering.py
 │   │   └── salary.py
@@ -43,7 +45,13 @@ boss-zhipin-jobs/
 │   │   ├── boss_client.py
 │   │   ├── auth.py
 │   │   ├── stoken.py
-│   │   └── excel_repository.py
+│   │   ├── sqlite_repository.py
+│   │   └── excel_exporter.py
+│   ├── web/
+│   │   ├── app.py
+│   │   ├── routes/
+│   │   ├── templates/
+│   │   └── static/
 │   └── utils/
 │       ├── iv8_silent.py
 │       └── logging.py
@@ -64,7 +72,9 @@ boss-zhipin-jobs/
 └── var/
     ├── cache/
     ├── logs/
-    └── outputs/
+    ├── data/
+    ├── exports/
+    └── outputs/  # 当前实现，Web 阶段后不再作为主存储
 ```
 
 `var/` 是默认运行数据根目录并排除版本控制；Cookie 文件默认位于 `var/secrets/cookies.json`，权限必须为 `0600`。浏览器 Profile 若保留，放在 `var/browser-profile/`。
@@ -79,6 +89,8 @@ boss-zhipin-jobs/
 
 ```text
 boss-zhipin collect
+boss-zhipin web
+boss-zhipin export excel
 boss-zhipin auth import <file>
 boss-zhipin auth check
 boss-zhipin config show
@@ -86,7 +98,7 @@ boss-zhipin config show
 
 ### 应用层：`application/collect_jobs.py`
 
-编排一次采集：创建会话、逐页请求、解析、筛选、去重、持久化并返回 `CollectionResult`。负责“做什么”，不负责具体 HTTP 或 Excel 实现。
+编排一次采集：创建会话、逐页请求、解析、筛选、去重、写入 SQLite 并返回 `CollectionResult`。负责“做什么”，不负责具体 HTTP、SQLite 或 Excel 实现。
 
 ### 领域层：`domain/`
 
@@ -103,7 +115,9 @@ boss-zhipin config show
 - `boss_client.py`：HTTP Session、请求构造、响应状态和 JSON 契约。
 - `stoken.py`：识别 `code=37`、下载安全 JS、调用 iv8、替换四个安全 Cookie并重试。
 - `auth.py`：Cookie 导入、校验、权限和最小登录检查；浏览器扫码作为可选适配器。
-- `excel_repository.py`：工作簿兼容、职位去重、旧行迁移、超链接和原子保存。
+- `sqlite_repository.py`：职位和采集批次的权威持久化。
+- `excel_exporter.py`：从 SQLite 查询结果按需生成 Excel。
+- `web/`：FastAPI + Jinja2 只读 Web 展示。
 
 ## 6. 依赖方向
 
@@ -147,11 +161,11 @@ CLI
 
 ## 9. 数据兼容
 
-第一版继续以 `encryptJobId` 为主键，保留现有 Excel 表名“职位”、15 列表头和旧 `securityId` 行迁移。重构阶段不同时更换存储格式；SQLite 仅在真实需求出现后另立方案。
+下一阶段继续以 `encryptJobId` 为主键，但不迁移当前 Excel。SQLite 从空库开始；Excel 保留现有 15 列语义，仅通过显式导出命令生成。
 
 ## 10. 非目标
 
 - 自动投递、自动聊天或批量账号。
 - 验证码识别、绕过安全验证或规避平台限制。
 - 高频并发抓取。
-- 微服务、容器编排、消息队列、数据库和 Web 管理后台。
+- 微服务、容器编排、消息队列、独立 SPA 和带写操作的 Web 管理后台。

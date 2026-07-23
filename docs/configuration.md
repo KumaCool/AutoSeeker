@@ -18,6 +18,8 @@
 
 ## 3. 建议配置文件
 
+以下为 Web 下一阶段的目标配置结构，当前发布版尚未实现 `storage`、`web` 和 `export.excel` 配置段：
+
 ```toml
 [search]
 keyword = "前端"
@@ -33,9 +35,16 @@ interval_seconds = 1.5
 timeout_seconds = 30
 max_security_refreshes = 1
 
-[output]
-format = "xlsx"
-path = "var/outputs/wuhan-frontend-jobs.xlsx"
+[storage]
+database = "var/data/boss-zhipin.sqlite3"
+
+[web]
+host = "127.0.0.1"
+port = 8080
+page_size = 50
+
+[export.excel]
+path = "var/exports/wuhan-frontend-jobs.xlsx"
 
 [runtime]
 log_dir = "var/logs"
@@ -67,13 +76,17 @@ Cookie 文件要求：
 - 页码、页数、page size、超时和间隔必须大于零。
 - 薪资和经验上限不得为负。
 - `max_security_refreshes` 第一版固定为 `1`，防止无限挑战循环。
-- 输出格式第一版只允许 `xlsx`。
+- SQLite 数据库路径必须可创建，Web 端口必须位于 `1..65535`。
+- Web 默认 host 必须是 `127.0.0.1`；绑定其他地址需显式配置。
+- Excel 只允许通过显式 `export excel` 命令生成，不配置自动导出开关。
 - 配置错误在任何网络请求前失败，退出码为 `2`。
 
 ## 7. 命令示例
 
 ```bash
 uv run boss-zhipin collect
+uv run boss-zhipin web
+uv run boss-zhipin export excel
 uv run boss-zhipin collect --keyword 前端 --city-code 101200100 --page-count 5
 uv run boss-zhipin --config config/default.toml config show
 uv run boss-zhipin auth import ~/Downloads/cookies.json
