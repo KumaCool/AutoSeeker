@@ -5,14 +5,18 @@ description = "AutoSeeker job discovery, filtering, web display, and export auto
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
 dependencies = [
+    "fastapi>=0.116,<1",
     "iv8>=0.1.4,<0.2",
+    "jinja2>=3.1,<4",
     "openpyxl>=3.1,<4",
     "requests>=2.32,<3",
+    "uvicorn>=0.35,<1",
     "websocket-client>=1.8,<2",
 ]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28,<1",
     "pre-commit>=4,<5",
     "pyright>=1.1,<2",
     "pytest>=8,<9",
