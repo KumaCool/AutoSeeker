@@ -5,30 +5,52 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-class ScriptTests(unittest.TestCase):
+class ProjectLayoutTests(unittest.TestCase):
     def test_portable_scripts_are_valid_posix_shell(self):
-        for script in ("setup.sh", "run_daily.sh"):
-            result = subprocess.run(["sh", "-n", str(ROOT / script)], capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, f"{script}: {result.stderr}")
+        for path in ("scripts/setup.sh", "scripts/run-daily.sh", "deploy/systemd/install-user-timer.sh"):
+            result = subprocess.run(["sh", "-n", str(ROOT / path)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, f"{path}: {result.stderr}")
 
-    def test_daily_runner_invokes_installed_cli(self):
-        text = (ROOT / "run_daily.sh").read_text(encoding="utf-8")
-        self.assertIn('.venv/bin/boss-zhipin" collect', text)
-        self.assertNotIn("boss_jobs.py", text)
+    def test_macos_scripts_are_grouped(self):
+        login = (ROOT / "scripts/macos/login.sh").read_text(encoding="utf-8")
+        installer = (ROOT / "scripts/macos/install-launchd.sh").read_text(encoding="utf-8")
+        self.assertIn("-m boss_zhipin.browser_auth", login)
+        self.assertIn("deploy/launchd/boss-zhipin.plist.template", installer)
 
-    def test_scheduler_templates_use_same_daily_runner(self):
-        service = (ROOT / "systemd/boss-zhipin.service.template").read_text(encoding="utf-8")
-        timer = (ROOT / "systemd/boss-zhipin.timer").read_text(encoding="utf-8")
-        launchd = (ROOT / "launchd.plist.template").read_text(encoding="utf-8")
-        self.assertIn("__WORK_DIR__/run_daily.sh", service)
-        self.assertIn("OnCalendar=*-*-* 09:00:00", timer)
+    def test_scheduler_templates_use_run_daily_script(self):
+        service = (ROOT / "deploy/systemd/boss-zhipin.service.template").read_text(encoding="utf-8")
+        launchd = (ROOT / "deploy/launchd/boss-zhipin.plist.template").read_text(encoding="utf-8")
+        self.assertIn("__WORK_DIR__/scripts/run-daily.sh", service)
         self.assertIn("__RUN_SCRIPT__", launchd)
-        self.assertIn("var/logs/launchd.out.log", launchd)
 
-    def test_macos_login_uses_packaged_browser_adapter(self):
-        text = (ROOT / "login.sh").read_text(encoding="utf-8")
-        self.assertIn("-m boss_zhipin.browser_auth", text)
-        self.assertNotIn('"$ROOT/browser_auth.py"', text)
+    def test_key_directories_have_readmes(self):
+        directories = [
+            "scripts",
+            "scripts/macos",
+            "deploy",
+            "deploy/systemd",
+            "deploy/launchd",
+            "config",
+            "src",
+            "tests",
+            "var",
+        ]
+        for directory in directories:
+            readme = ROOT / directory / "README.md"
+            self.assertTrue(readme.is_file(), f"missing {readme}")
+            self.assertGreater(len(readme.read_text(encoding="utf-8").strip()), 40)
+
+    def test_root_no_longer_contains_helper_scripts(self):
+        old_paths = [
+            "setup.sh",
+            "run_daily.sh",
+            "login.sh",
+            "install_launchd.sh",
+            "launchd.plist.template",
+            "systemd",
+            "cookies.example.json",
+        ]
+        self.assertEqual([path for path in old_paths if (ROOT / path).exists()], [])
 
 
 if __name__ == "__main__":

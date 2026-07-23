@@ -1,7 +1,7 @@
 #!/bin/sh
 set -u
 
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$ROOT"
 mkdir -p var/logs var/outputs var/cache/security-js var/secrets
 RUN_ID=$(date '+%Y%m%d-%H%M%S')
@@ -15,7 +15,7 @@ work_dir=%s
 ' "$RUN_ID" "$(date '+%Y-%m-%d %H:%M:%S %Z')" "$ROOT" >> "$LATEST_LOG"
 
 if [ ! -x "$ROOT/.venv/bin/boss-zhipin" ]; then
-  echo "缺少已安装 CLI，请先运行 ./setup.sh" | tee -a "$LATEST_LOG" >&2
+  echo "缺少已安装 CLI，请先运行 scripts/setup.sh" | tee -a "$LATEST_LOG" >&2
   echo "exit_code=1" > "$EXIT_FILE"
   cp "$LATEST_LOG" "$ARCHIVE_LOG"
   exit 1

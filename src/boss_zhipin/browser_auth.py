@@ -118,7 +118,7 @@ def read_page_cookies(target):
     try:
         import websocket
     except ImportError as exc:
-        raise RuntimeError("缺少 websocket-client，请先运行 ./setup.sh") from exc
+        raise RuntimeError("缺少 websocket-client，请先运行 scripts/setup.sh") from exc
 
     connection = websocket.create_connection(target["webSocketDebuggerUrl"], timeout=3, suppress_origin=True)
     try:

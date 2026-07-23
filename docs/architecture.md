@@ -9,7 +9,7 @@
 - HTTP、stoken、解析、筛选、Excel 和流程编排集中在单文件中。
 - 源码与 `.browser-profile/`、Cookie、日志、逆向缓存、截图和输出混放。
 - 搜索参数、UA 和路径硬编码。
-- `run_daily.sh`、登录脚本和 Chrome 路径偏向 macOS，Linux 不能作为一等运行环境。
+- 重构前的每日脚本、登录脚本和 Chrome 路径偏向 macOS，Linux 不能作为一等运行环境。
 - 测试主要覆盖纯函数，尚未覆盖 API 契约、`code=37` 重试和错误路径。
 
 ## 3. 设计原则
@@ -54,6 +54,12 @@ boss-zhipin-jobs/
 │   └── fixtures/
 ├── config/default.toml
 ├── scripts/
+│   ├── setup.sh
+│   ├── run-daily.sh
+│   └── macos/
+├── deploy/
+│   ├── systemd/
+│   └── launchd/
 ├── docs/
 └── var/
     ├── cache/

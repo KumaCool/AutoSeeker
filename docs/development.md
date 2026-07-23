@@ -14,7 +14,7 @@
 uv sync --locked --all-groups
 ```
 
-现有 macOS 包装脚本也可以执行 `./setup.sh`。Linux 开发环境直接使用 uv 和 Python 入口，不依赖 zsh 或 macOS Chrome。
+可执行 `./scripts/setup.sh` 建立环境。Linux 开发环境直接使用 uv 和 Python 入口，不依赖 zsh 或 macOS Chrome。
 
 ## 离线质量检查
 

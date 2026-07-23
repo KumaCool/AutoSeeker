@@ -9,7 +9,7 @@
 要求 Python 3.11-3.14 和 [uv](https://docs.astral.sh/uv/)。
 
 ```bash
-./setup.sh
+./scripts/setup.sh
 .venv/bin/boss-zhipin --help
 ```
 
@@ -57,19 +57,19 @@
 
 ## 定时任务
 
-Linux systemd user timer 模板位于 `systemd/`。生成用户单元但不自动启用：
+Linux systemd user timer 模板位于 `deploy/systemd/`。生成用户单元但不自动启用：
 
 ```bash
-./systemd/install-user-timer.sh
+./deploy/systemd/install-user-timer.sh
 ```
 
 macOS launchd：
 
 ```bash
-./install_launchd.sh
+./scripts/macos/install-launchd.sh
 ```
 
-两者都调用相同的 `run_daily.sh` 和 `boss-zhipin collect`。
+两者都调用相同的 `scripts/run-daily.sh` 和 `boss-zhipin collect`。各辅助目录的用途见其 `README.md`。
 
 ## 开发验证
 
