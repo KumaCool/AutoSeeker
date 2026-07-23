@@ -2,6 +2,7 @@ import os
 import subprocess
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,6 +43,16 @@ class CliTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         legacy_main.assert_called_once_with()
+
+    def test_legacy_project_root_is_added_to_import_path(self):
+        import sys
+
+        from boss_zhipin import cli
+        from boss_zhipin.config import PROJECT_ROOT
+
+        with patch.object(sys, "path", [entry for entry in sys.path if entry != str(PROJECT_ROOT)]):
+            cli.ensure_legacy_import_path()
+            self.assertEqual(sys.path[0], str(PROJECT_ROOT))
 
     def test_config_show_redacts_cookie_path(self):
         result = self.run_cli("config", "show")

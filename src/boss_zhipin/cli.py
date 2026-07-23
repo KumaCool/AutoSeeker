@@ -1,9 +1,18 @@
 import argparse
 import json
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from boss_zhipin import __version__
+
+
+def ensure_legacy_import_path():
+    from boss_zhipin.config import PROJECT_ROOT
+
+    root = str(PROJECT_ROOT)
+    if root not in sys.path:
+        sys.path.insert(0, root)
 
 
 def build_parser():
@@ -29,6 +38,7 @@ def build_parser():
 def main(argv: Sequence[str] | None = None):
     args = build_parser().parse_args(argv)
     if args.command == "collect":
+        ensure_legacy_import_path()
         import boss_jobs
         from boss_zhipin.config import load_config
 
