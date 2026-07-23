@@ -64,6 +64,8 @@ fixture 不含真实 Cookie、stoken、账号标识或可复用 challenge。
 
 不同时引入多套同类工具。
 
+当前阶段已启用 pytest、ruff、pyright、pre-commit 和 GitHub Actions CI。CI 只运行离线检查。
+
 ## 4. 质量门禁
 
 默认验证命令：

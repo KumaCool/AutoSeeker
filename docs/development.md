@@ -4,13 +4,14 @@
 
 - Python 3.11-3.14
 - uv
-- 当前测试框架：`unittest`
-- 当前代码仍是阶段 1 的兼容结构，目标架构见 [architecture.md](architecture.md)
+- 测试框架：pytest（兼容现有 unittest 测试）
+- 质量工具：ruff、pyright、pre-commit
+- 当前代码已落地模块化分层，结构见 [architecture.md](architecture.md)
 
 ## 建立环境
 
 ```bash
-uv sync --locked
+uv sync --locked --all-groups
 ```
 
 现有 macOS 包装脚本也可以执行 `./setup.sh`。Linux 开发环境直接使用 uv 和 Python 入口，不依赖 zsh 或 macOS Chrome。
@@ -22,7 +23,11 @@ uv lock --check
 .venv/bin/python -m py_compile \
   boss_jobs.py browser_auth.py runtime_paths.py \
   utils/iv8_silent.py utils/logger.py
-.venv/bin/python -m unittest discover -s tests -v
+uv run ruff format --check .
+uv run ruff check .
+uv run pyright
+uv run pytest
+uv run pre-commit run --all-files
 git diff --check
 ```
 
