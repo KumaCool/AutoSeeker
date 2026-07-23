@@ -49,10 +49,10 @@ chmod +x setup.sh login.sh run_daily.sh install_launchd.sh
 
 输出文件：
 
-- `outputs/wuhan-frontend-jobs.xlsx`：增量职位表
-- `logs/latest.log`：最近一次完整日志
-- `logs/latest.exit`：最近一次退出码
-- `logs/run-YYYYMMDD-HHMMSS.log`：历史运行日志
+- `var/outputs/wuhan-frontend-jobs.xlsx`：增量职位表
+- `var/logs/latest.log`：最近一次完整日志
+- `var/logs/latest.exit`：最近一次退出码
+- `var/logs/run-YYYYMMDD-HHMMSS.log`：历史运行日志
 
 ## 每日任务
 

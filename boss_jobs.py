@@ -13,6 +13,16 @@ from openpyxl.utils import get_column_letter
 
 from utils.iv8_silent import import_iv8_silent
 from utils.logger import logger
+from runtime_paths import (
+    CACHE_DIR,
+    COOKIE_FILE,
+    COOKIE_TEXT_FILE,
+    EXCEL_FILE,
+    LEGACY_COOKIE_FILE,
+    LEGACY_COOKIE_TEXT_FILE,
+    LEGACY_EXCEL_FILE,
+    OUTPUT_DIR,
+)
 
 
 START_PAGE = 1
@@ -28,13 +38,6 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
 PAGE_URL = f"https://www.zhipin.com/web/geek/jobs?query={urllib.parse.quote(KEYWORD)}&city={CITY_CODE}"
 API_URL = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
 
-WORK_DIR = Path(__file__).resolve().parent
-CACHE_DIR = WORK_DIR / "js_reverse_cache"
-OUTPUT_DIR = WORK_DIR / "outputs"
-COOKIE_FILE = WORK_DIR / "cookies.json"
-COOKIE_TEXT_FILE = WORK_DIR / "cookies.txt"
-EXCEL_FILE = OUTPUT_DIR / "wuhan-frontend-jobs.xlsx"
-
 HEADERS = [
     "抓取日期", "首次发现", "是否新增", "职位", "公司", "薪资", "最低薪资(K)",
     "最高薪资(K)", "经验", "学历", "地点", "招聘者", "技能", "职位链接", "职位ID",
@@ -42,8 +45,10 @@ HEADERS = [
 
 
 def load_cookies():
-    if COOKIE_FILE.exists():
-        payload = json.loads(COOKIE_FILE.read_text(encoding="utf-8"))
+    json_path = COOKIE_FILE if COOKIE_FILE.exists() else LEGACY_COOKIE_FILE
+    text_path = COOKIE_TEXT_FILE if COOKIE_TEXT_FILE.exists() else LEGACY_COOKIE_TEXT_FILE
+    if json_path.exists():
+        payload = json.loads(json_path.read_text(encoding="utf-8"))
         if isinstance(payload, dict):
             cookies = {str(k): str(v) for k, v in payload.items() if v is not None}
         elif isinstance(payload, list):
@@ -54,8 +59,8 @@ def load_cookies():
             }
         else:
             raise ValueError("cookies.json 必须是 Cookie 对象或浏览器导出的 Cookie 数组")
-    elif COOKIE_TEXT_FILE.exists():
-        cookie_text = COOKIE_TEXT_FILE.read_text(encoding="utf-8").strip()
+    elif text_path.exists():
+        cookie_text = text_path.read_text(encoding="utf-8").strip()
         cookies = {}
         for part in cookie_text.split(";"):
             if "=" not in part:
@@ -116,7 +121,7 @@ def replace_cookie(session, name, value):
 
 
 def save_text(name, text):
-    CACHE_DIR.mkdir(exist_ok=True)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
     path = CACHE_DIR / name
     path.write_text(text, encoding="utf-8", errors="ignore")
     return path
@@ -279,7 +284,9 @@ def extract_jobs(payload):
 
 
 def load_or_create_workbook():
-    OUTPUT_DIR.mkdir(exist_ok=True)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    if not EXCEL_FILE.exists() and LEGACY_EXCEL_FILE.exists():
+        EXCEL_FILE.write_bytes(LEGACY_EXCEL_FILE.read_bytes())
     if EXCEL_FILE.exists():
         workbook = load_workbook(EXCEL_FILE)
         sheet = workbook["职位"]

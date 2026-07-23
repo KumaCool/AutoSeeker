@@ -5,7 +5,7 @@ ROOT="${0:A:h}"
 LABEL="com.codex.boss-zhipin-wuhan-frontend"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 
-mkdir -p "$HOME/Library/LaunchAgents" "$ROOT/logs"
+mkdir -p "$HOME/Library/LaunchAgents" "$ROOT/var/logs"
 sed \
   -e "s|__LABEL__|$LABEL|g" \
   -e "s|__RUN_SCRIPT__|$ROOT/run_daily.sh|g" \

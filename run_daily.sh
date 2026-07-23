@@ -4,12 +4,12 @@ set -o pipefail
 
 ROOT="${0:A:h}"
 cd "$ROOT"
-mkdir -p logs outputs js_reverse_cache
+mkdir -p var/logs var/outputs var/cache/security-js var/secrets
 
 RUN_ID="$(date '+%Y%m%d-%H%M%S')"
-LATEST_LOG="$ROOT/logs/latest.log"
-ARCHIVE_LOG="$ROOT/logs/run-$RUN_ID.log"
-EXIT_FILE="$ROOT/logs/latest.exit"
+LATEST_LOG="$ROOT/var/logs/latest.log"
+ARCHIVE_LOG="$ROOT/var/logs/run-$RUN_ID.log"
+EXIT_FILE="$ROOT/var/logs/latest.exit"
 
 : > "$LATEST_LOG"
 {
@@ -25,7 +25,7 @@ if [[ ! -x "$ROOT/.venv/bin/python" ]]; then
   exit 1
 fi
 
-if [[ -d "$ROOT/.browser-profile" && "${SKIP_BROWSER_AUTH:-0}" != "1" ]]; then
+if [[ ( -d "$ROOT/var/browser-profile" || -d "$ROOT/.browser-profile" ) && "${SKIP_BROWSER_AUTH:-0}" != "1" ]]; then
   "$ROOT/.venv/bin/python" "$ROOT/browser_auth.py" --headless --timeout 30 2>&1 | tee -a "$LATEST_LOG"
   AUTH_EXIT=${pipestatus[1]}
   if [[ "$AUTH_EXIT" -ne 0 ]]; then

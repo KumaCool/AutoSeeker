@@ -9,11 +9,10 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from runtime_paths import COOKIE_FILE, LOG_DIR, PROFILE_DIR
 
-WORK_DIR = Path(__file__).resolve().parent
-PROFILE_DIR = WORK_DIR / ".browser-profile"
-COOKIE_FILE = WORK_DIR / "cookies.json"
-CHROME_LOG = WORK_DIR / "logs" / "chrome-auth.log"
+
+CHROME_LOG = LOG_DIR / "chrome-auth.log"
 LOGIN_URL = "https://www.zhipin.com/web/user/"
 AUTH_COOKIE_NAMES = {"zp_at"}
 CHROME_APP = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -77,7 +76,7 @@ def start_chrome(headless):
     if headless:
         command.append("--headless=new")
     command.append(LOGIN_URL)
-    CHROME_LOG.parent.mkdir(exist_ok=True)
+    CHROME_LOG.parent.mkdir(parents=True, exist_ok=True)
     log_file = CHROME_LOG.open("w", encoding="utf-8")
     process = subprocess.Popen(command, stdout=log_file, stderr=subprocess.STDOUT)
     try:
@@ -145,7 +144,7 @@ def read_page_cookies(target):
 
 
 def refresh_cookies(headless, timeout):
-    PROFILE_DIR.mkdir(exist_ok=True)
+    PROFILE_DIR.mkdir(parents=True, exist_ok=True)
     chrome_process, port, chrome_log = start_chrome(headless)
     try:
         deadline = time.monotonic() + timeout

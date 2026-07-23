@@ -9,6 +9,33 @@ import boss_jobs
 import browser_auth
 
 
+class RuntimePathTests(unittest.TestCase):
+    def test_runtime_paths_live_under_var(self):
+        import runtime_paths
+
+        expected = runtime_paths.WORK_DIR / "var"
+        self.assertEqual(runtime_paths.RUNTIME_DIR, expected)
+        self.assertEqual(runtime_paths.COOKIE_FILE, expected / "secrets" / "cookies.json")
+        self.assertEqual(runtime_paths.CACHE_DIR, expected / "cache" / "security-js")
+        self.assertEqual(runtime_paths.LOG_DIR, expected / "logs")
+        self.assertEqual(runtime_paths.OUTPUT_DIR, expected / "outputs")
+        self.assertEqual(runtime_paths.PROFILE_DIR, expected / "browser-profile")
+
+    def test_cookie_loader_falls_back_to_legacy_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            new_cookie = root / "var" / "secrets" / "cookies.json"
+            legacy_cookie = root / "cookies.json"
+            legacy_cookie.write_text('{"zp_at": "legacy-token"}', encoding="utf-8")
+
+            with patch.object(boss_jobs, "COOKIE_FILE", new_cookie), patch.object(
+                boss_jobs, "LEGACY_COOKIE_FILE", legacy_cookie
+            ), patch.object(boss_jobs, "COOKIE_TEXT_FILE", root / "var" / "secrets" / "cookies.txt"), patch.object(
+                boss_jobs, "LEGACY_COOKIE_TEXT_FILE", root / "cookies.txt"
+            ):
+                self.assertEqual(boss_jobs.load_cookies(), {"zp_at": "legacy-token"})
+
+
 class ParsingTests(unittest.TestCase):
     def test_salary_range(self):
         self.assertEqual(boss_jobs.parse_salary("15-25K·14薪"), (15.0, 25.0))
