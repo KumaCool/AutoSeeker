@@ -21,6 +21,11 @@ class RuntimePathTests(unittest.TestCase):
         self.assertEqual(runtime_paths.OUTPUT_DIR, expected / "outputs")
         self.assertEqual(runtime_paths.PROFILE_DIR, expected / "browser-profile")
 
+    def test_browser_auth_uses_active_profile(self):
+        import runtime_paths
+
+        self.assertEqual(browser_auth.PROFILE_DIR, runtime_paths.active_profile_dir())
+
     def test_cookie_loader_falls_back_to_legacy_file(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

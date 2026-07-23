@@ -9,9 +9,10 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from runtime_paths import COOKIE_FILE, LOG_DIR, PROFILE_DIR
+from runtime_paths import COOKIE_FILE, LOG_DIR, active_profile_dir
 
 
+PROFILE_DIR = active_profile_dir()
 CHROME_LOG = LOG_DIR / "chrome-auth.log"
 LOGIN_URL = "https://www.zhipin.com/web/user/"
 AUTH_COOKIE_NAMES = {"zp_at"}
