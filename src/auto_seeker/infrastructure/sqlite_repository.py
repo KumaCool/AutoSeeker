@@ -1,5 +1,7 @@
+import re
 import sqlite3
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 
 SCHEMA = """
@@ -66,3 +68,54 @@ class SQLiteJobRepository:
             raise
         finally:
             connection.close()
+
+    @staticmethod
+    def _now():
+        return datetime.now(UTC).isoformat()
+
+    @staticmethod
+    def _redact_error(error):
+        message = str(error)
+        for name in ("zp_at", "wt2", "__zp_stoken__", "__zp_sseed__", "__zp_sname__"):
+            message = re.sub(rf"({re.escape(name)}\s*[=:]\s*)[^\s,;]+", r"\1<redacted>", message)
+        return message
+
+    def begin_run(self, pages_requested):
+        with self.connect() as connection:
+            cursor = connection.execute(
+                "INSERT INTO collection_runs(started_at, status, pages_requested) VALUES (?, 'running', ?)",
+                (self._now(), pages_requested),
+            )
+            return cursor.lastrowid
+
+    def complete_run(self, run_id, *, pages_completed, matched_count, new_count):
+        with self.connect() as connection:
+            connection.execute(
+                """UPDATE collection_runs
+                   SET finished_at=?, status='completed', pages_completed=?, matched_count=?, new_count=?
+                   WHERE id=?""",
+                (self._now(), pages_completed, matched_count, new_count, run_id),
+            )
+
+    def fail_run(self, run_id, *, pages_completed, matched_count, error, partial):
+        with self.connect() as connection:
+            connection.execute(
+                """UPDATE collection_runs
+                   SET finished_at=?, status=?, pages_completed=?, matched_count=?,
+                       error_type=?, error_message=?
+                   WHERE id=?""",
+                (
+                    self._now(),
+                    "partial" if partial else "failed",
+                    pages_completed,
+                    matched_count,
+                    type(error).__name__,
+                    self._redact_error(error),
+                    run_id,
+                ),
+            )
+
+    def get_run(self, run_id):
+        with self.connect() as connection:
+            row = connection.execute("SELECT * FROM collection_runs WHERE id=?", (run_id,)).fetchone()
+        return dict(row) if row else None
