@@ -48,7 +48,7 @@ var/
 └── browser-profile/
 ```
 
-为兼容现有用户，阶段 1 仍可只读使用根目录旧 `cookies.json` 和旧 Excel；新写入一律进入 `var/`。旧数据实际删除或清理由用户批准后执行。
+运行数据只保存在 `var/`；根目录不再保留旧 Cookie、Excel、日志、逆向缓存或浏览器 Profile。
 
 ## Git 提交规则
 

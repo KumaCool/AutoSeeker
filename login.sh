@@ -9,5 +9,5 @@ if [[ ! -x "$ROOT/.venv/bin/python" ]]; then
   exit 1
 fi
 
-"$ROOT/.venv/bin/python" "$ROOT/browser_auth.py" --timeout 300
-SKIP_BROWSER_AUTH=1 "$ROOT/run_daily.sh"
+BOSS_PROJECT_ROOT="$ROOT" "$ROOT/.venv/bin/python" -m boss_zhipin.browser_auth --timeout 300
+"$ROOT/run_daily.sh"

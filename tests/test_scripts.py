@@ -25,6 +25,11 @@ class ScriptTests(unittest.TestCase):
         self.assertIn("__RUN_SCRIPT__", launchd)
         self.assertIn("var/logs/launchd.out.log", launchd)
 
+    def test_macos_login_uses_packaged_browser_adapter(self):
+        text = (ROOT / "login.sh").read_text(encoding="utf-8")
+        self.assertIn("-m boss_zhipin.browser_auth", text)
+        self.assertNotIn('"$ROOT/browser_auth.py"', text)
+
 
 if __name__ == "__main__":
     unittest.main()
