@@ -60,6 +60,23 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("auth", result.stdout)
 
+    def test_help_lists_web_command(self):
+        result = self.run_cli("--help")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("web", result.stdout)
+
+    def test_web_command_runs_uvicorn_with_configured_values(self):
+        from auto_seeker import cli
+
+        with patch("uvicorn.run") as run:
+            result = cli.main(["web", "--host", "127.0.0.2", "--port", "9090"])
+
+        self.assertEqual(result, 0)
+        run.assert_called_once()
+        self.assertEqual(run.call_args.kwargs["host"], "127.0.0.2")
+        self.assertEqual(run.call_args.kwargs["port"], 9090)
+
 
 if __name__ == "__main__":
     unittest.main()

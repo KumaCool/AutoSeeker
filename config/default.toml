@@ -15,6 +15,11 @@ max_security_refreshes = 1
 [storage]
 database = "var/data/autoseeker.sqlite3"
 
+[web]
+host = "127.0.0.1"
+port = 8080
+page_size = 50
+
 [runtime]
 cache_dir = "var/cache/security-js"
 log_dir = "var/logs"

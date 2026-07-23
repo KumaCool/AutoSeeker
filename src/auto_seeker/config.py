@@ -36,6 +36,13 @@ class StorageConfig:
 
 
 @dataclass(frozen=True)
+class WebConfig:
+    host: str
+    port: int
+    page_size: int
+
+
+@dataclass(frozen=True)
 class RuntimeConfig:
     cache_dir: Path
     log_dir: Path
@@ -47,6 +54,7 @@ class AppConfig:
     search: SearchConfig
     request: RequestConfig
     storage: StorageConfig
+    web: WebConfig
     runtime: RuntimeConfig
 
 
@@ -62,6 +70,9 @@ ENV_KEYS = {
     "AUTOSEEKER_REQUEST_TIMEOUT_SECONDS": "request.timeout_seconds",
     "AUTOSEEKER_COOKIE_FILE": "runtime.cookie_file",
     "AUTOSEEKER_DATABASE": "storage.database",
+    "AUTOSEEKER_WEB_HOST": "web.host",
+    "AUTOSEEKER_WEB_PORT": "web.port",
+    "AUTOSEEKER_WEB_PAGE_SIZE": "web.page_size",
 }
 
 
@@ -110,6 +121,13 @@ def load_config(path: str | Path | None = None, overrides: dict[str, Any] | None
 
     search = data["search"]
     request = data["request"]
+    web = data["web"]
+    web_port = int(web["port"])
+    if not 1 <= web_port <= 65535:
+        raise ConfigError("web.port 必须位于 1..65535")
+    web_page_size = int(web["page_size"])
+    if web_page_size not in {20, 50, 100}:
+        raise ConfigError("web.page_size 只允许 20、50 或 100")
     return AppConfig(
         search=SearchConfig(
             keyword=str(search["keyword"]),
@@ -126,6 +144,7 @@ def load_config(path: str | Path | None = None, overrides: dict[str, Any] | None
             max_security_refreshes=int(_positive("max_security_refreshes", int(request["max_security_refreshes"]))),
         ),
         storage=StorageConfig(database=Path(data["storage"]["database"])),
+        web=WebConfig(host=str(web["host"]), port=web_port, page_size=web_page_size),
         runtime=RuntimeConfig(
             cache_dir=Path(data["runtime"]["cache_dir"]),
             log_dir=Path(data["runtime"]["log_dir"]),

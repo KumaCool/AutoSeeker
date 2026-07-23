@@ -18,6 +18,9 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.search.minimum_salary_k, 15)
         self.assertEqual(config.search.maximum_experience_years, 3)
         self.assertEqual(config.storage.database, Path("var/data/autoseeker.sqlite3"))
+        self.assertEqual(config.web.host, "127.0.0.1")
+        self.assertEqual(config.web.port, 8080)
+        self.assertEqual(config.web.page_size, 50)
 
     def test_config_show_works_outside_repository(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -52,6 +55,13 @@ class ConfigTests(unittest.TestCase):
         with patch.dict(os.environ, {"AUTOSEEKER_PAGE_COUNT": "0"}, clear=False):
             with self.assertRaises(ConfigError):
                 load_config()
+
+    def test_invalid_web_port_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.toml"
+            path.write_text("[web]\nport = 70000\n", encoding="utf-8")
+            with self.assertRaises(ConfigError):
+                load_config(path)
 
 
 if __name__ == "__main__":

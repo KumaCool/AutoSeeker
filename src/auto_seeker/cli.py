@@ -22,6 +22,9 @@ def build_parser():
     config = subparsers.add_parser("config", help="查看配置")
     config_commands = config.add_subparsers(dest="config_command", required=True)
     config_commands.add_parser("show", help="显示生效配置")
+    web = subparsers.add_parser("web", help="启动只读 Web 页面")
+    web.add_argument("--host")
+    web.add_argument("--port", type=int)
     return parser
 
 
@@ -101,6 +104,25 @@ def main(argv: Sequence[str] | None = None):
         payload = json.loads(cookie_path.read_text(encoding="utf-8"))
         code = check_cookies(payload, timeout=config.request.timeout_seconds)
         print(f"BOSS 登录检查成功，业务码={code}")
+        return 0
+    if args.command == "web":
+        import uvicorn
+
+        from auto_seeker.config import PROJECT_ROOT, load_config
+        from auto_seeker.web.app import create_app
+
+        config = load_config(
+            args.config,
+            {
+                "web.host": args.host,
+                "web.port": args.port,
+            },
+        )
+        database_path = config.storage.database
+        if not database_path.is_absolute():
+            database_path = PROJECT_ROOT / database_path
+        app = create_app(database_path)
+        uvicorn.run(app, host=config.web.host, port=config.web.port)
         return 0
     if args.command == "config" and args.config_command == "show":
         from dataclasses import asdict
