@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}采集记录 · AutoSeeker{% endblock %}
+{% block content %}
+<section class="hero compact"><p class="eyebrow">COLLECTION RUNS</p><h1>采集记录</h1><p>查看每次采集的完成情况、职位数量和脱敏错误摘要。</p></section>
+{% if runs %}
+<div class="table-wrap"><table>
+<thead><tr><th>批次</th><th>状态</th><th>开始时间</th><th>完成页数</th><th>匹配</th><th>新增</th><th>错误摘要</th></tr></thead>
+<tbody>{% for run in runs %}<tr>
+<td>#{{ run.id }}</td>
+<td><span class="status status-{{ run.status }}">{{ status_labels[run.status] }}</span></td>
+<td>{{ run.started_at }}</td><td>{{ run.pages_completed }} / {{ run.pages_requested }}</td><td>{{ run.matched_count }}</td><td>{{ run.new_count }}</td><td class="error-message">{{ run.error_message or '—' }}</td>
+</tr>{% endfor %}</tbody>
+</table></div>
+{% else %}
+<section class="empty"><h2>还没有采集记录</h2><p>执行一次采集后，批次状态会显示在这里。</p></section>
+{% endif %}
+{% endblock %}

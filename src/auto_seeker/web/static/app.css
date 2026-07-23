@@ -55,3 +55,15 @@ dt { color:var(--muted); } dd { margin:0; text-align:right; }
 .primary-link { display:inline-flex; margin-top:22px; padding:10px 16px; color:#fff; background:var(--accent); border-radius:9px; font-weight:650; }
 .error-page { margin-top:40px; }
 @media (max-width:700px) { .detail-grid{grid-template-columns:1fr}.detail-heading{flex-direction:column}.detail-card{padding:20px} }
+.compact h1 { font-size:40px; }
+.table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+table { width:100%; border-collapse:collapse; min-width:900px; }
+th,td { padding:14px 16px; text-align:left; border-bottom:1px solid var(--line); font-size:13px; vertical-align:top; }
+th { color:var(--muted); background:#f8f9fa; font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+tbody tr:last-child td { border-bottom:0; }
+.status { display:inline-flex; padding:3px 8px; border-radius:999px; font-weight:650; }
+.status-completed { color:var(--accent); background:var(--accent-soft); }
+.status-failed { color:var(--danger); background:#feeceb; }
+.status-partial { color:#8a5a00; background:#fff3d6; }
+.status-running { color:#175cd3; background:#eaf2ff; }
+.error-message { max-width:320px; color:var(--muted); word-break:break-word; }

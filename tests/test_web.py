@@ -118,5 +118,39 @@ class JobDetailWebTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
 
 
+class CollectionRunsWebTests(unittest.TestCase):
+    def test_runs_show_status_counts_and_safe_error_summary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3")
+            repository = app.state.repository
+            completed = repository.begin_run(pages_requested=5)
+            repository.complete_run(completed, pages_completed=5, matched_count=12, new_count=3)
+            failed = repository.begin_run(pages_requested=1)
+            repository.fail_run(
+                failed,
+                pages_completed=0,
+                matched_count=0,
+                error=RuntimeError("zp_at=secret-value <script>alert(1)</script>"),
+                partial=False,
+            )
+            response = TestClient(app).get("/runs")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("采集记录", response.text)
+        self.assertIn("已完成", response.text)
+        self.assertIn("失败", response.text)
+        self.assertIn("12", response.text)
+        self.assertNotIn("secret-value", response.text)
+        self.assertNotIn("<script>alert(1)</script>", response.text)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", response.text)
+
+    def test_empty_runs_page_has_empty_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            response = TestClient(create_app(Path(directory) / "autoseeker.sqlite3")).get("/runs")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("还没有采集记录", response.text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -78,4 +78,20 @@ def create_app(database_path):
             return templates.TemplateResponse(request, "errors/404.html", status_code=404)
         return templates.TemplateResponse(request, "jobs/detail.html", {"job": job})
 
+    @app.get("/runs", include_in_schema=False)
+    def collection_runs(request: Request):
+        return templates.TemplateResponse(
+            request,
+            "runs/list.html",
+            {
+                "runs": repository.list_runs(),
+                "status_labels": {
+                    "running": "进行中",
+                    "completed": "已完成",
+                    "partial": "部分完成",
+                    "failed": "失败",
+                },
+            },
+        )
+
     return app
