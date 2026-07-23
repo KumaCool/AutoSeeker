@@ -46,6 +46,41 @@ class AuthServiceTests(unittest.TestCase):
 
         self.assertEqual(cookies, {"zp_at": "legacy-token"})
 
+    def test_load_cookie_file_accepts_simplified_name_value_array(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "cookies.json"
+            path.write_text('[{"name": "zp_at", "value": "token"}]', encoding="utf-8")
+
+            cookies = load_cookie_file(path)
+
+        self.assertEqual(cookies, {"zp_at": "token"})
+
+    def test_load_cookie_file_falls_back_to_configured_text(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            text_path = root / "var/secrets/cookies.txt"
+            text_path.parent.mkdir(parents=True)
+            text_path.write_text("zp_at=token; wt2=visitor", encoding="utf-8")
+
+            cookies = load_cookie_file(root / "var/secrets/cookies.json", text_path=text_path)
+
+        self.assertEqual(cookies, {"zp_at": "token", "wt2": "visitor"})
+
+    def test_load_cookie_file_falls_back_to_legacy_text(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            legacy_text = root / "cookies.txt"
+            legacy_text.write_text("zp_at=legacy; wt2=visitor", encoding="utf-8")
+
+            cookies = load_cookie_file(
+                root / "var/secrets/cookies.json",
+                root / "cookies.json",
+                root / "var/secrets/cookies.txt",
+                legacy_text,
+            )
+
+        self.assertEqual(cookies, {"zp_at": "legacy", "wt2": "visitor"})
+
     def test_check_uses_minimal_single_page_request(self):
         from boss_zhipin import auth
 

@@ -49,7 +49,12 @@ def main(argv: Sequence[str] | None = None):
         cookie_path = config.runtime.cookie_file
         if not cookie_path.is_absolute():
             cookie_path = PROJECT_ROOT / cookie_path
-        cookies = load_cookie_file(cookie_path, PROJECT_ROOT / "cookies.json")
+        cookies = load_cookie_file(
+            cookie_path,
+            PROJECT_ROOT / "cookies.json",
+            cookie_path.with_suffix(".txt"),
+            PROJECT_ROOT / "cookies.txt",
+        )
         session = requests.Session()
         session.cookies.update(cookies)
         criteria = SearchCriteria(

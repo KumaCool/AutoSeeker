@@ -40,17 +40,47 @@ def import_cookies(source: str | Path, destination: str | Path):
 def cookie_dict(cookies):
     if isinstance(cookies, dict):
         return {str(key): str(value) for key, value in cookies.items() if value is not None}
-    return {str(item["name"]): str(item["value"]) for item in validate_cookies(cookies)}
+    if isinstance(cookies, list):
+        return {
+            str(item["name"]): str(item["value"])
+            for item in cookies
+            if isinstance(item, dict) and item.get("name") and item.get("value") is not None
+        }
+    raise AuthError("Cookie JSON 必须是对象或数组")
 
 
-def load_cookie_file(path: str | Path, legacy_path: str | Path | None = None):
-    path = Path(path)
-    legacy = Path(legacy_path) if legacy_path else None
-    source = path if path.exists() else legacy
-    if source is None or not source.exists():
-        raise FileNotFoundError(f"缺少 Cookie 文件：{path}")
-    payload = json.loads(source.read_text(encoding="utf-8"))
-    cookies = cookie_dict(payload)
+def _parse_cookie_text(text):
+    cookies = {}
+    for part in text.split(";"):
+        if "=" not in part:
+            continue
+        name, value = part.strip().split("=", 1)
+        if name:
+            cookies[name] = value
+    return cookies
+
+
+def load_cookie_file(
+    path: str | Path,
+    legacy_path: str | Path | None = None,
+    text_path: str | Path | None = None,
+    legacy_text_path: str | Path | None = None,
+):
+    json_paths = [Path(path)]
+    if legacy_path:
+        json_paths.append(Path(legacy_path))
+    text_paths = [Path(text_path)] if text_path else [Path(path).with_suffix(".txt")]
+    if legacy_text_path:
+        text_paths.append(Path(legacy_text_path))
+
+    source = next((candidate for candidate in json_paths if candidate.exists()), None)
+    if source:
+        cookies = cookie_dict(json.loads(source.read_text(encoding="utf-8")))
+    else:
+        text_source = next((candidate for candidate in text_paths if candidate.exists()), None)
+        if text_source is None:
+            raise FileNotFoundError(f"缺少 Cookie 文件：{path}")
+        cookies = _parse_cookie_text(text_source.read_text(encoding="utf-8").strip())
     if not cookies or any("替换为" in value for value in cookies.values()):
         raise AuthError("Cookie 文件为空或仍是示例内容")
     for name, value in cookies.items():
