@@ -1,0 +1,19 @@
+[project]
+name = "boss-zhipin-jobs"
+version = "1.0.0"
+description = "Local BOSS Zhipin job search and Excel export automation"
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "iv8>=0.1.4,<0.2",
+    "openpyxl>=3.1,<4",
+    "requests>=2.32,<3",
+    "websocket-client>=1.8,<2",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

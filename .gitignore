@@ -1,0 +1,12 @@
+.venv/
+.browser-profile/
+cookies.json
+cookies.json.tmp
+cookies.txt
+js_reverse_cache/
+logs/
+outputs/*.xlsx
+__pycache__/
+utils/__pycache__/
+.DS_Store
+work/
