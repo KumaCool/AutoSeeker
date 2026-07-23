@@ -12,8 +12,8 @@ interval_seconds = 1.5
 timeout_seconds = 30
 max_security_refreshes = 1
 
-[output]
-path = "var/outputs/wuhan-frontend-jobs.xlsx"
+[storage]
+database = "var/data/autoseeker.sqlite3"
 
 [runtime]
 cache_dir = "var/cache/security-js"

@@ -31,8 +31,8 @@ class RequestConfig:
 
 
 @dataclass(frozen=True)
-class OutputConfig:
-    path: Path
+class StorageConfig:
+    database: Path
 
 
 @dataclass(frozen=True)
@@ -46,7 +46,7 @@ class RuntimeConfig:
 class AppConfig:
     search: SearchConfig
     request: RequestConfig
-    output: OutputConfig
+    storage: StorageConfig
     runtime: RuntimeConfig
 
 
@@ -61,7 +61,7 @@ ENV_KEYS = {
     "AUTOSEEKER_REQUEST_INTERVAL_SECONDS": "request.interval_seconds",
     "AUTOSEEKER_REQUEST_TIMEOUT_SECONDS": "request.timeout_seconds",
     "AUTOSEEKER_COOKIE_FILE": "runtime.cookie_file",
-    "AUTOSEEKER_OUTPUT_FILE": "output.path",
+    "AUTOSEEKER_DATABASE": "storage.database",
 }
 
 
@@ -125,7 +125,7 @@ def load_config(path: str | Path | None = None, overrides: dict[str, Any] | None
             timeout_seconds=int(_positive("timeout_seconds", int(request["timeout_seconds"]))),
             max_security_refreshes=int(_positive("max_security_refreshes", int(request["max_security_refreshes"]))),
         ),
-        output=OutputConfig(path=Path(data["output"]["path"])),
+        storage=StorageConfig(database=Path(data["storage"]["database"])),
         runtime=RuntimeConfig(
             cache_dir=Path(data["runtime"]["cache_dir"]),
             log_dir=Path(data["runtime"]["log_dir"]),

@@ -32,18 +32,20 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("0.1.0", result.stdout)
 
-    def test_collect_uses_packaged_cookie_loader(self):
+    def test_collect_uses_sqlite_repository(self):
         from auto_seeker import cli
 
         with (
             patch("auto_seeker.auth.load_cookie_file", return_value={"zp_at": "token"}) as loader,
             patch("auto_seeker.application.collect_jobs.collect_jobs") as collect,
+            patch("auto_seeker.infrastructure.sqlite_repository.SQLiteJobRepository") as repository,
         ):
-            collect.return_value = type("Result", (), {"matched_count": 0, "new_count": 0})()
+            collect.return_value = type("Result", (), {"run_id": 1, "matched_count": 0, "new_count": 0})()
             result = cli.main(["collect", "--page-count", "1"])
 
         self.assertEqual(result, 0)
         loader.assert_called_once()
+        repository.assert_called_once()
 
     def test_config_show_redacts_cookie_path(self):
         result = self.run_cli("config", "show")

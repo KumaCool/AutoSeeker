@@ -10,7 +10,7 @@ def build_parser():
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--config", help="TOML 配置文件路径")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    collect = subparsers.add_parser("collect", help="采集职位并增量写入 Excel")
+    collect = subparsers.add_parser("collect", help="采集职位并写入 SQLite")
     collect.add_argument("--keyword")
     collect.add_argument("--city-code")
     collect.add_argument("--page-count", type=int)
@@ -34,7 +34,7 @@ def main(argv: Sequence[str] | None = None):
         from auto_seeker.auth import load_cookie_file
         from auto_seeker.config import PROJECT_ROOT, load_config
         from auto_seeker.infrastructure.boss_client import BossClient
-        from auto_seeker.infrastructure.excel_repository import ExcelJobRepository
+        from auto_seeker.infrastructure.sqlite_repository import SQLiteJobRepository
         from auto_seeker.infrastructure.stoken import StokenService
         from auto_seeker.models import SearchCriteria
 
@@ -65,13 +65,13 @@ def main(argv: Sequence[str] | None = None):
         )
         client = BossClient(session, criteria, config.search.page_size, config.request.timeout_seconds)
         cache_dir = config.runtime.cache_dir
-        output_path = config.output.path
+        database_path = config.storage.database
         if not cache_dir.is_absolute():
             cache_dir = PROJECT_ROOT / cache_dir
-        if not output_path.is_absolute():
-            output_path = PROJECT_ROOT / output_path
+        if not database_path.is_absolute():
+            database_path = PROJECT_ROOT / database_path
         stoken = StokenService(session, client.page_url, cache_dir, client.user_agent, client.timeout)
-        repository = ExcelJobRepository(output_path, PROJECT_ROOT / "outputs/wuhan-frontend-jobs.xlsx")
+        repository = SQLiteJobRepository(database_path)
         result = collect_jobs(
             client,
             stoken,
@@ -81,7 +81,10 @@ def main(argv: Sequence[str] | None = None):
             config.search.page_count,
             config.request.interval_seconds,
         )
-        print(f"保存完成：符合条件={result.matched_count} 新增={result.new_count} Excel={output_path}")
+        print(
+            f"采集完成：批次={result.run_id} 符合条件={result.matched_count} "
+            f"新增={result.new_count} SQLite={database_path}"
+        )
         return 0
     if args.command == "auth":
         from auto_seeker.auth import check_cookies, import_cookies

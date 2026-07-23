@@ -5,17 +5,21 @@ from auto_seeker.domain.filtering import extract_jobs
 
 
 class CollectionError(RuntimeError):
-    pass
+    def __init__(self, message, result=None):
+        super().__init__(message)
+        self.result = result
 
 
 @dataclass(frozen=True)
 class CollectionResult:
+    run_id: int
     pages_completed: int
     matched_count: int
     new_count: int
 
 
 def collect_jobs(client, stoken, repository, criteria, start_page, page_count, interval: float = 0, sleep=time.sleep):
+    run_id = repository.begin_run(pages_requested=page_count)
     collected = {}
     failure = None
     pages_completed = 0
@@ -35,8 +39,32 @@ def collect_jobs(client, stoken, repository, criteria, start_page, page_count, i
         except Exception as exc:
             failure = exc
             break
-    new_count = repository.save(list(collected.values())) if collected else 0
-    result = CollectionResult(pages_completed, len(collected), new_count)
+    try:
+        new_count = repository.save_jobs(run_id, list(collected.values())) if collected else 0
+    except Exception as storage_error:
+        result = CollectionResult(run_id, pages_completed, len(collected), 0)
+        repository.fail_run(
+            run_id,
+            pages_completed=pages_completed,
+            matched_count=len(collected),
+            error=storage_error,
+            partial=False,
+        )
+        raise CollectionError(f"本地存储失败：{storage_error}", result) from storage_error
+    result = CollectionResult(run_id, pages_completed, len(collected), new_count)
     if failure:
-        raise CollectionError(f"任务未完成，已保存部分结果：{failure}") from failure
+        repository.fail_run(
+            run_id,
+            pages_completed=pages_completed,
+            matched_count=len(collected),
+            error=failure,
+            partial=bool(collected),
+        )
+        raise CollectionError(f"任务未完成，已保存部分结果：{failure}", result) from failure
+    repository.complete_run(
+        run_id,
+        pages_completed=pages_completed,
+        matched_count=len(collected),
+        new_count=new_count,
+    )
     return result

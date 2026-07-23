@@ -9,7 +9,7 @@ from auto_seeker.config import ConfigError, load_config
 
 
 class ConfigTests(unittest.TestCase):
-    def test_default_config_matches_existing_behavior(self):
+    def test_default_config_uses_sqlite_storage(self):
         config = load_config()
 
         self.assertEqual(config.search.keyword, "前端")
@@ -17,7 +17,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.search.page_count, 5)
         self.assertEqual(config.search.minimum_salary_k, 15)
         self.assertEqual(config.search.maximum_experience_years, 3)
-        self.assertEqual(config.output.path, Path("var/outputs/wuhan-frontend-jobs.xlsx"))
+        self.assertEqual(config.storage.database, Path("var/data/autoseeker.sqlite3"))
 
     def test_config_show_works_outside_repository(self):
         with tempfile.TemporaryDirectory() as directory:

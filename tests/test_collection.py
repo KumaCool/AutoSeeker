@@ -53,14 +53,17 @@ class CollectionTests(unittest.TestCase):
         client = Mock()
         client.request_page.side_effect = [payload, RuntimeError("network")]
         repository = Mock()
-        repository.save.return_value = 1
+        repository.begin_run.return_value = 7
+        repository.save_jobs.return_value = 1
         criteria = SearchCriteria("前端", "101200100", 15, 3)
 
         with self.assertRaises(CollectionError):
             collect_jobs(client, Mock(), repository, criteria, 1, 2, sleep=lambda _: None)
 
-        repository.save.assert_called_once()
-        self.assertEqual(len(repository.save.call_args.args[0]), 1)
+        repository.save_jobs.assert_called_once()
+        self.assertEqual(repository.save_jobs.call_args.args[0], 7)
+        self.assertEqual(len(repository.save_jobs.call_args.args[1]), 1)
+        repository.fail_run.assert_called_once()
 
 
 if __name__ == "__main__":
