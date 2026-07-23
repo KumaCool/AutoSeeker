@@ -1,17 +1,8 @@
 import argparse
 import json
-import sys
 from collections.abc import Sequence
 
 from boss_zhipin import __version__
-
-
-def ensure_legacy_import_path():
-    from boss_zhipin.config import PROJECT_ROOT
-
-    root = str(PROJECT_ROOT)
-    if root not in sys.path:
-        sys.path.insert(0, root)
 
 
 def build_parser():
@@ -37,11 +28,10 @@ def build_parser():
 def main(argv: Sequence[str] | None = None):
     args = build_parser().parse_args(argv)
     if args.command == "collect":
-        ensure_legacy_import_path()
         import requests
 
-        import boss_jobs
         from boss_zhipin.application.collect_jobs import collect_jobs
+        from boss_zhipin.auth import load_cookie_file
         from boss_zhipin.config import PROJECT_ROOT, load_config
         from boss_zhipin.infrastructure.boss_client import BossClient
         from boss_zhipin.infrastructure.excel_repository import ExcelJobRepository
@@ -56,8 +46,10 @@ def main(argv: Sequence[str] | None = None):
                 "search.page_count": args.page_count,
             },
         )
-        boss_jobs.apply_config(config)
-        cookies = boss_jobs.load_cookies()
+        cookie_path = config.runtime.cookie_file
+        if not cookie_path.is_absolute():
+            cookie_path = PROJECT_ROOT / cookie_path
+        cookies = load_cookie_file(cookie_path, PROJECT_ROOT / "cookies.json")
         session = requests.Session()
         session.cookies.update(cookies)
         criteria = SearchCriteria(

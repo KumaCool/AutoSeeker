@@ -55,7 +55,7 @@ class StokenService:
         }
 
     def compute_token(self, seed, name, ts):
-        from utils.iv8_silent import import_iv8_silent
+        from boss_zhipin.iv8_silent import import_iv8_silent
 
         js_url = f"https://www.zhipin.com/web/common/security-js/{name}.js"
         response = self.session.get(

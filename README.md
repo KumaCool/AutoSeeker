@@ -53,7 +53,7 @@
 - `var/outputs/wuhan-frontend-jobs.xlsx`
 - `var/browser-profile/`（可选，仅 macOS 浏览器登录）
 
-以上内容均排除版本控制。阶段兼容入口仍可读取根目录旧 Cookie、旧 Excel 和旧浏览器 Profile。
+以上内容均排除版本控制。正式 CLI 仍可读取根目录旧 Cookie 和旧 Excel；macOS 登录适配器仍可复用旧浏览器 Profile。
 
 ## 定时任务
 

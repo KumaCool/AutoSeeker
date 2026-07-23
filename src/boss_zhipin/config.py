@@ -1,11 +1,11 @@
 import os
 import tomllib
 from dataclasses import dataclass
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CONFIG_FILE = PROJECT_ROOT / "config" / "default.toml"
+PROJECT_ROOT = Path(os.environ.get("BOSS_PROJECT_ROOT", Path.cwd())).resolve()
 
 
 class ConfigError(ValueError):
@@ -95,7 +95,7 @@ def _positive(name: str, value: int | float):
 
 
 def load_config(path: str | Path | None = None, overrides: dict[str, Any] | None = None):
-    with DEFAULT_CONFIG_FILE.open("rb") as stream:
+    with files("boss_zhipin").joinpath("default.toml").open("rb") as stream:
         data = tomllib.load(stream)
     if path is not None:
         with Path(path).open("rb") as stream:

@@ -1,4 +1,5 @@
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,6 +18,19 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.search.minimum_salary_k, 15)
         self.assertEqual(config.search.maximum_experience_years, 3)
         self.assertEqual(config.output.path, Path("var/outputs/wuhan-frontend-jobs.xlsx"))
+
+    def test_config_show_works_outside_repository(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run(
+                [str(Path(__file__).resolve().parents[1] / ".venv/bin/boss-zhipin"), "config", "show"],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('"keyword": "前端"', result.stdout)
 
     def test_environment_overrides_toml(self):
         with tempfile.TemporaryDirectory() as directory:

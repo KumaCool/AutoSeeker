@@ -32,29 +32,18 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("1.0.0", result.stdout)
 
-    def test_collect_delegates_to_legacy_main(self):
-        from unittest.mock import patch
-
+    def test_collect_uses_packaged_cookie_loader(self):
         from boss_zhipin import cli
 
         with (
-            patch("boss_jobs.load_cookies", return_value={"zp_at": "token"}),
+            patch("boss_zhipin.auth.load_cookie_file", return_value={"zp_at": "token"}) as loader,
             patch("boss_zhipin.application.collect_jobs.collect_jobs") as collect,
         ):
             collect.return_value = type("Result", (), {"matched_count": 0, "new_count": 0})()
             result = cli.main(["collect", "--page-count", "1"])
 
         self.assertEqual(result, 0)
-
-    def test_legacy_project_root_is_added_to_import_path(self):
-        import sys
-
-        from boss_zhipin import cli
-        from boss_zhipin.config import PROJECT_ROOT
-
-        with patch.object(sys, "path", [entry for entry in sys.path if entry != str(PROJECT_ROOT)]):
-            cli.ensure_legacy_import_path()
-            self.assertEqual(sys.path[0], str(PROJECT_ROOT))
+        loader.assert_called_once()
 
     def test_config_show_redacts_cookie_path(self):
         result = self.run_cli("config", "show")

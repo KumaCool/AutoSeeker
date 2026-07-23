@@ -43,6 +43,25 @@ def cookie_dict(cookies):
     return {str(item["name"]): str(item["value"]) for item in validate_cookies(cookies)}
 
 
+def load_cookie_file(path: str | Path, legacy_path: str | Path | None = None):
+    path = Path(path)
+    legacy = Path(legacy_path) if legacy_path else None
+    source = path if path.exists() else legacy
+    if source is None or not source.exists():
+        raise FileNotFoundError(f"缺少 Cookie 文件：{path}")
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    cookies = cookie_dict(payload)
+    if not cookies or any("替换为" in value for value in cookies.values()):
+        raise AuthError("Cookie 文件为空或仍是示例内容")
+    for name, value in cookies.items():
+        try:
+            name.encode("latin-1")
+            value.encode("latin-1")
+        except UnicodeEncodeError as exc:
+            raise AuthError(f"Cookie {name!r} 含请求头无法编码的字符") from exc
+    return cookies
+
+
 def check_cookies(cookies, session=None, timeout=30):
     session = session or requests.Session()
     session.cookies.update(cookie_dict(cookies))

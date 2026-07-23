@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
-from boss_zhipin.auth import AuthError, import_cookies, validate_cookies
+from boss_zhipin.auth import AuthError, import_cookies, load_cookie_file, validate_cookies
 
 
 class AuthServiceTests(unittest.TestCase):
@@ -35,6 +35,16 @@ class AuthServiceTests(unittest.TestCase):
     def test_validate_requires_nonempty_zp_at(self):
         with self.assertRaises(AuthError):
             validate_cookies([{"name": "wt2", "value": "visitor", "domain": ".zhipin.com"}])
+
+    def test_load_cookie_file_falls_back_to_legacy_json(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            legacy = root / "cookies.json"
+            legacy.write_text('{"zp_at": "legacy-token"}', encoding="utf-8")
+
+            cookies = load_cookie_file(root / "var/secrets/cookies.json", legacy)
+
+        self.assertEqual(cookies, {"zp_at": "legacy-token"})
 
     def test_check_uses_minimal_single_page_request(self):
         from boss_zhipin import auth

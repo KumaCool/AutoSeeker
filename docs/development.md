@@ -21,8 +21,10 @@ uv sync --locked --all-groups
 ```bash
 uv lock --check
 .venv/bin/python -m py_compile \
-  boss_jobs.py browser_auth.py runtime_paths.py \
-  utils/iv8_silent.py utils/logger.py
+  src/boss_zhipin/*.py \
+  src/boss_zhipin/domain/*.py \
+  src/boss_zhipin/infrastructure/*.py \
+  src/boss_zhipin/application/*.py
 uv run ruff format --check .
 uv run ruff check .
 uv run pyright
