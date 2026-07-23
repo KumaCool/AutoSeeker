@@ -42,3 +42,16 @@ button { color:#fff; background:var(--accent); }
 .pagination a { padding:9px 14px; border:1px solid var(--line); border-radius:9px; background:#fff; }
 @media (max-width:900px) { .filters { grid-template-columns:1fr 1fr; } }
 @media (max-width:600px) { .container{padding:28px 14px 60px}.topbar{padding:0 14px}.filters{grid-template-columns:1fr}.job-card footer{align-items:flex-start;flex-direction:column}.results-head{align-items:flex-start;flex-direction:column;gap:4px} }
+.back { display:inline-block; margin-bottom:18px; color:var(--muted); }
+.detail-card { padding:30px; border:1px solid var(--line); border-radius:18px; background:var(--surface); }
+.detail-heading { display:flex; justify-content:space-between; gap:24px; align-items:flex-start; padding-bottom:24px; border-bottom:1px solid var(--line); }
+.detail-heading h1 { font-size:clamp(30px,4vw,46px); }
+.detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin:28px 0; }
+.detail-grid section,.skills-panel { padding:20px; border-radius:12px; background:#f8f9fa; }
+.detail-grid h2,.skills-panel h2 { margin:0 0 14px; font-size:15px; }
+dl { margin:0; display:grid; gap:10px; }
+dl div { display:flex; justify-content:space-between; gap:20px; }
+dt { color:var(--muted); } dd { margin:0; text-align:right; }
+.primary-link { display:inline-flex; margin-top:22px; padding:10px 16px; color:#fff; background:var(--accent); border-radius:9px; font-weight:650; }
+.error-page { margin-top:40px; }
+@media (max-width:700px) { .detail-grid{grid-template-columns:1fr}.detail-heading{flex-direction:column}.detail-card{padding:20px} }

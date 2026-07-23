@@ -95,5 +95,28 @@ class JobListWebTests(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
 
 
+class JobDetailWebTests(unittest.TestCase):
+    def test_detail_renders_fields_and_safe_external_link(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3")
+            seed_jobs(app)
+            response = TestClient(app).get("/jobs/id-1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("示例公司", response.text)
+        self.assertIn("首次发现", response.text)
+        self.assertIn('target="_blank"', response.text)
+        self.assertIn('rel="noopener noreferrer"', response.text)
+        self.assertNotIn("<script>alert(1)</script>", response.text)
+
+    def test_missing_job_returns_html_404(self):
+        with tempfile.TemporaryDirectory() as directory:
+            response = TestClient(create_app(Path(directory) / "autoseeker.sqlite3")).get("/jobs/missing")
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("没有找到这个职位", response.text)
+        self.assertIn("text/html", response.headers["content-type"])
+
+
 if __name__ == "__main__":
     unittest.main()

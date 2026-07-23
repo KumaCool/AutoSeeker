@@ -71,4 +71,11 @@ def create_app(database_path):
             },
         )
 
+    @app.get("/jobs/{job_id}", include_in_schema=False)
+    def job_detail(request: Request, job_id: str):
+        job = repository.get_job_detail(job_id)
+        if job is None:
+            return templates.TemplateResponse(request, "errors/404.html", status_code=404)
+        return templates.TemplateResponse(request, "jobs/detail.html", {"job": job})
+
     return app
