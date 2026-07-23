@@ -17,6 +17,15 @@ class ScriptTests(unittest.TestCase):
         self.assertIn('.venv/bin/boss-zhipin" collect', text)
         self.assertNotIn("boss_jobs.py", text)
 
+    def test_scheduler_templates_use_same_daily_runner(self):
+        service = (ROOT / "systemd/boss-zhipin.service.template").read_text(encoding="utf-8")
+        timer = (ROOT / "systemd/boss-zhipin.timer").read_text(encoding="utf-8")
+        launchd = (ROOT / "launchd.plist.template").read_text(encoding="utf-8")
+        self.assertIn("__WORK_DIR__/run_daily.sh", service)
+        self.assertIn("OnCalendar=*-*-* 09:00:00", timer)
+        self.assertIn("__RUN_SCRIPT__", launchd)
+        self.assertIn("var/logs/launchd.out.log", launchd)
+
 
 if __name__ == "__main__":
     unittest.main()

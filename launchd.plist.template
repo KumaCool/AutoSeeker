@@ -17,8 +17,8 @@
     <key>Minute</key><integer>0</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>__WORK_DIR__/logs/launchd.out.log</string>
+  <string>__WORK_DIR__/var/logs/launchd.out.log</string>
   <key>StandardErrorPath</key>
-  <string>__WORK_DIR__/logs/launchd.err.log</string>
+  <string>__WORK_DIR__/var/logs/launchd.err.log</string>
 </dict>
 </plist>
