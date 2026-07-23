@@ -5,7 +5,34 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from auto_seeker.models import Job
 from auto_seeker.web.app import create_app
+
+
+def seed_jobs(app):
+    repository = app.state.repository
+    first = repository.begin_run(pages_requested=1)
+    repository.save_jobs(
+        first,
+        [
+            Job(
+                fetched_at="2026-07-24 08:00:00",
+                job_name="<script>alert(1)</script>Vue 前端",
+                company="示例公司",
+                salary="20-30K",
+                salary_low=20,
+                salary_high=30,
+                experience="1-3年",
+                degree="本科",
+                location="武汉·光谷",
+                boss="招聘者",
+                skills="Vue TypeScript",
+                url="https://www.zhipin.com/job_detail/id-1.html",
+                job_id="id-1",
+            )
+        ],
+    )
+    repository.complete_run(first, pages_completed=1, matched_count=1, new_count=1)
 
 
 class WebHealthTests(unittest.TestCase):
@@ -33,6 +60,39 @@ class WebHealthTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("--accent", response.text)
+
+
+class JobListWebTests(unittest.TestCase):
+    def test_empty_database_shows_friendly_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            client = TestClient(create_app(Path(directory) / "autoseeker.sqlite3"))
+            response = client.get("/jobs")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("尚无采集数据", response.text)
+        self.assertIn("AutoSeeker", response.text)
+
+    def test_list_renders_filters_and_escapes_content(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3")
+            seed_jobs(app)
+            client = TestClient(app)
+            response = client.get("/jobs?q=Vue&minimum_salary=15&maximum_experience=3&location=武汉&new_only=1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Vue 前端", response.text)
+        self.assertNotIn("<script>alert(1)</script>", response.text)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", response.text)
+        self.assertIn('value="Vue"', response.text)
+        self.assertIn('value="武汉"', response.text)
+        self.assertIn("1 个职位", response.text)
+
+    def test_invalid_query_returns_422_without_database_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            client = TestClient(create_app(Path(directory) / "autoseeker.sqlite3"))
+            response = client.get("/jobs?page=0")
+
+        self.assertEqual(response.status_code, 422)
 
 
 if __name__ == "__main__":

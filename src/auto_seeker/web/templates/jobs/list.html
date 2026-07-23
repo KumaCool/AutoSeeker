@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}职位 · AutoSeeker{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">JOB DISCOVERY</p>
+  <h1>找到更值得关注的机会</h1>
+  <p>查看采集结果，按职位、公司、技能、薪资和地点快速筛选。</p>
+</section>
+<form method="get" action="/jobs" class="filters">
+  <label>关键词<input name="q" value="{{ query.q or '' }}" placeholder="职位、公司或技能"></label>
+  <label>最低薪资(K)<input type="number" name="minimum_salary" min="0" value="{{ query.minimum_salary if query.minimum_salary is not none else '' }}"></label>
+  <label>最大经验(年)<input type="number" name="maximum_experience" min="0" value="{{ query.maximum_experience if query.maximum_experience is not none else '' }}"></label>
+  <label>地点<input name="location" value="{{ query.location or '' }}" placeholder="武汉"></label>
+  <label>排序<select name="sort">
+    <option value="newest" {% if query.sort.value == 'newest' %}selected{% endif %}>新增优先</option>
+    <option value="salary_desc" {% if query.sort.value == 'salary_desc' %}selected{% endif %}>薪资从高到低</option>
+    <option value="last_seen" {% if query.sort.value == 'last_seen' %}selected{% endif %}>最近发现</option>
+  </select></label>
+  <label class="checkbox"><input type="checkbox" name="new_only" value="1" {% if query.new_only %}checked{% endif %}>仅看新增</label>
+  <button type="submit">筛选</button>
+  <a class="secondary" href="/jobs">清空</a>
+</form>
+<section class="results-head"><h2>{{ page.total }} 个职位</h2><span>第 {{ page.page }} 页 / 共 {{ page.page_count }} 页</span></section>
+{% if page.items %}
+<div class="job-grid">
+{% for job in page.items %}
+<article class="job-card">
+  <div class="job-card-top">{% if job.is_new %}<span class="badge">新增</span>{% endif %}<span class="salary">{{ job.salary }}</span></div>
+  <h3><a href="/jobs/{{ job.job_id }}">{{ job.job_name }}</a></h3>
+  <p class="company">{{ job.company }}</p>
+  <div class="meta"><span>{{ job.experience }}</span><span>{{ job.degree }}</span><span>{{ job.location }}</span></div>
+  <p class="skills">{{ job.skills }}</p>
+  <footer><span>最后发现 {{ job.last_seen_at }}</span><a href="{{ job.url }}" target="_blank" rel="noopener noreferrer">BOSS 详情 ↗</a></footer>
+</article>
+{% endfor %}
+</div>
+<nav class="pagination">
+  {% if page.has_previous %}<a href="?{{ previous_query }}">← 上一页</a>{% endif %}
+  {% if page.has_next %}<a href="?{{ next_query }}">下一页 →</a>{% endif %}
+</nav>
+{% else %}
+<section class="empty"><h2>尚无采集数据</h2><p>完成一次成功采集后，职位会显示在这里。</p></section>
+{% endif %}
+{% endblock %}
