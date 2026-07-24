@@ -1,6 +1,7 @@
 import urllib.parse
 
 API_URL = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
+DETAIL_API_URL = "https://www.zhipin.com/wapi/zpgeek/job/detail.json"
 DEFAULT_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/138 Safari/537.36"
 
 
@@ -59,4 +60,21 @@ class BossClient:
             raise BossApiError(f"BOSS API code={code}: {payload.get('message') or payload}")
         if code == 37 and not payload.get("zpData"):
             raise BossApiError("BOSS API code=37 缺少 zpData")
+        return payload
+
+    def request_job_detail(self, job):
+        response = self.session.get(
+            DETAIL_API_URL,
+            params={"securityId": job.security_id, "jobId": job.job_id, "lid": job.lid},
+            headers={**self.headers(), "referer": f"https://www.zhipin.com/job_detail/{job.job_id}.html"},
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise BossApiError("BOSS 职位详情返回非 JSON 响应") from exc
+        code = payload.get("code")
+        if code not in (0, 37):
+            raise BossApiError(f"BOSS 职位详情 code={code}: {payload.get('message') or payload}")
         return payload

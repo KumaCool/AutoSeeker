@@ -178,7 +178,7 @@ class JobListWebTests(unittest.TestCase):
         self.assertIn('value="武汉"', response.text)
         self.assertIn("1 个职位", response.text)
         self.assertIn("招聘者状态", response.text)
-        self.assertIn("在线", response.text)
+        self.assertIn("未知", response.text)
 
     def test_invalid_query_returns_422_without_database_error(self):
         with tempfile.TemporaryDirectory() as directory:

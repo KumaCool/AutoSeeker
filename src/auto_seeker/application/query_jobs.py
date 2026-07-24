@@ -31,8 +31,8 @@ class JobQuery:
         q = self.q.strip() if self.q else None
         location = self.location.strip() if self.location else None
         recruiter_status = self.recruiter_status.strip() if self.recruiter_status else None
-        if recruiter_status not in {None, "在线", "离线", "未知"}:
-            raise QueryError(f"不支持的招聘者状态：{recruiter_status}")
+        if recruiter_status is not None and len(recruiter_status) > 50:
+            raise QueryError("招聘者状态不得超过 50 个字符")
         try:
             sort = self.sort if isinstance(self.sort, SortOrder) else SortOrder(self.sort)  # type: ignore[arg-type]
         except ValueError as exc:

@@ -85,6 +85,15 @@ class SQLiteQueryTests(unittest.TestCase):
 
         self.assertEqual([item["job_id"] for item in page.items], ["1"])
 
+    def test_lists_distinct_recruiter_statuses(self):
+        with self.repository.connect() as connection:
+            connection.execute("UPDATE jobs SET recruiter_status='刚刚活跃' WHERE job_id='1'")
+            connection.execute("UPDATE jobs SET recruiter_status='3月内活跃' WHERE job_id='2'")
+
+        statuses = self.repository.list_recruiter_statuses()
+
+        self.assertEqual(statuses, ["3月内活跃", "刚刚活跃", "未知"])
+
     def test_new_only_uses_latest_completed_run(self):
         page = self.repository.query_jobs(JobQuery(new_only=True))
 

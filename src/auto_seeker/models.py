@@ -25,6 +25,8 @@ class Job:
     url: str
     job_id: str
     recruiter_status: str = "未知"
+    security_id: str = ""
+    lid: str = ""
 
     def to_dict(self):
         return asdict(self)

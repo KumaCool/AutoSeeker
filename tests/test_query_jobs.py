@@ -20,9 +20,9 @@ class JobQueryModelTests(unittest.TestCase):
         self.assertFalse(query.new_only)
         self.assertIsNone(query.recruiter_status)
 
-    def test_rejects_unknown_recruiter_status(self):
+    def test_rejects_overlong_recruiter_status(self):
         with self.assertRaises(QueryError):
-            JobQuery(recruiter_status="忙碌")
+            JobQuery(recruiter_status="x" * 51)
 
     def test_rejects_invalid_pagination_salary_and_experience(self):
         invalid = [

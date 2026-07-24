@@ -34,6 +34,24 @@ class BossClientTests(unittest.TestCase):
         with self.assertRaises(BossApiError):
             self.client.request_page(1)
 
+    def test_requests_job_detail_with_list_metadata(self):
+        session = Mock()
+        response = Mock()
+        response.json.return_value = {
+            "code": 0,
+            "zpData": {"bossInfo": {"bossOnline": False, "activeTimeDesc": "3月内活跃"}},
+        }
+        session.get.return_value = response
+        client = BossClient(session, self.criteria)
+        job = Mock(job_id="job-id", security_id="security", lid="search-lid")
+
+        payload = client.request_job_detail(job)
+
+        self.assertEqual(payload["zpData"]["bossInfo"]["activeTimeDesc"], "3月内活跃")
+        self.assertEqual(session.get.call_args.kwargs["params"]["securityId"], "security")
+        self.assertEqual(session.get.call_args.kwargs["params"]["jobId"], "job-id")
+        self.assertEqual(session.get.call_args.kwargs["params"]["lid"], "search-lid")
+
     def test_security_challenge_is_returned_for_stoken_service(self):
         response = Mock()
         response.raise_for_status.return_value = None

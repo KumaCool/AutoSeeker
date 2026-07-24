@@ -6,6 +6,106 @@ from auto_seeker.models import SearchCriteria
 
 
 class CollectionTests(unittest.TestCase):
+    def test_enriches_recruiter_status_from_detail_response(self):
+        payload = {
+            "code": 0,
+            "zpData": {
+                "jobList": [
+                    {
+                        "salaryDesc": "15-20K",
+                        "jobExperience": "1-3年",
+                        "encryptJobId": "id",
+                        "jobName": "前端",
+                        "brandName": "公司",
+                        "bossOnline": False,
+                        "securityId": "security",
+                        "lid": "lid",
+                    }
+                ]
+            },
+        }
+        client = Mock()
+        client.request_page.return_value = payload
+        client.request_job_detail.return_value = {
+            "code": 0,
+            "zpData": {"bossInfo": {"bossOnline": False, "activeTimeDesc": "3月内活跃"}},
+        }
+        repository = Mock()
+        repository.begin_run.return_value = 1
+        repository.save_jobs.return_value = 1
+
+        collect_jobs(
+            client,
+            Mock(),
+            repository,
+            SearchCriteria("前端", "101200100", 15, 3),
+            1,
+            1,
+            sleep=lambda _: None,
+        )
+
+        saved = repository.save_jobs.call_args.args[1][0]
+        self.assertEqual(saved.recruiter_status, "3月内活跃")
+
+    def test_online_detail_takes_priority_over_active_description(self):
+        client = Mock()
+        client.request_page.return_value = {
+            "code": 0,
+            "zpData": {
+                "jobList": [
+                    {
+                        "salaryDesc": "15-20K",
+                        "jobExperience": "1-3年",
+                        "encryptJobId": "id",
+                        "bossOnline": True,
+                    }
+                ]
+            },
+        }
+        client.request_job_detail.return_value = {
+            "code": 0,
+            "zpData": {"bossInfo": {"bossOnline": True, "activeTimeDesc": "刚刚活跃"}},
+        }
+        repository = Mock()
+        repository.begin_run.return_value = 1
+        repository.save_jobs.return_value = 1
+
+        collect_jobs(
+            client,
+            Mock(),
+            repository,
+            SearchCriteria("前端", "101200100", 15, 3),
+            1,
+            1,
+            sleep=lambda _: None,
+        )
+
+        self.assertEqual(repository.save_jobs.call_args.args[1][0].recruiter_status, "在线")
+
+    def test_detail_failure_keeps_unknown_without_failing_collection(self):
+        client = Mock()
+        client.request_page.return_value = {
+            "code": 0,
+            "zpData": {"jobList": [{"salaryDesc": "15-20K", "jobExperience": "1-3年", "encryptJobId": "id"}]},
+        }
+        client.request_job_detail.side_effect = RuntimeError("detail unavailable")
+        repository = Mock()
+        repository.begin_run.return_value = 1
+        repository.save_jobs.return_value = 1
+
+        result = collect_jobs(
+            client,
+            Mock(),
+            repository,
+            SearchCriteria("前端", "101200100", 15, 3),
+            1,
+            1,
+            sleep=lambda _: None,
+        )
+
+        self.assertEqual(result.matched_count, 1)
+        self.assertEqual(repository.save_jobs.call_args.args[1][0].recruiter_status, "未知")
+
     def test_code_37_refreshes_once_then_collects(self):
         client = Mock()
         client.request_page.side_effect = [

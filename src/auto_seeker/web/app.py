@@ -120,6 +120,7 @@ def create_app(database_path, default_page_size=50, cookie_path=None, request_ti
                 "collect_status": request.query_params.get("collect_status"),
                 "collect_notice": app.state.collect_state["message"],
                 "collect_state": app.state.collect_state,
+                "recruiter_statuses": repository.list_recruiter_statuses(),
                 "previous_query": page_query(query.page - 1),
                 "next_query": page_query(query.page + 1),
             },

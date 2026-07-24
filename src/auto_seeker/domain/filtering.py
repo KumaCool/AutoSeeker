@@ -59,9 +59,9 @@ def extract_jobs(payload, criteria, fetched_at=None):
                 skills=str(skills),
                 url=url,
                 job_id=job_id or url,
-                recruiter_status=(
-                    "在线" if item.get("bossOnline") is True else "离线" if item.get("bossOnline") is False else "未知"
-                ),
+                recruiter_status=("在线" if item.get("bossOnline") is True else "未知"),
+                security_id=str(item.get("securityId") or ""),
+                lid=str(item.get("lid") or ""),
             )
         )
     return jobs

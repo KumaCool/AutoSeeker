@@ -270,5 +270,12 @@ class SQLiteJobRepository:
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def list_recruiter_statuses(self):
+        with self.connect() as connection:
+            rows = connection.execute(
+                "SELECT DISTINCT recruiter_status FROM jobs WHERE recruiter_status <> '' ORDER BY recruiter_status"
+            ).fetchall()
+        return [row[0] for row in rows]
+
     def get_job_detail(self, job_id):
         return self.get_job(job_id)
