@@ -28,6 +28,11 @@ button { color:#fff; background:var(--accent); }
 .results-head>div { display:flex; gap:12px; align-items:baseline; }
 .results-head form { margin:0; }
 .collect-button { height:38px; padding:0 18px; }
+.stop-button { background:var(--danger); }
+.collect-progress { margin:-4px 0 18px; padding:14px 16px; border:1px solid var(--line); border-radius:10px; background:var(--surface); }
+.collect-progress p { margin:8px 0 0; color:var(--muted); font-size:13px; }
+.progress-track { height:8px; overflow:hidden; border-radius:999px; background:#e8ebef; }
+.progress-bar { height:100%; border-radius:999px; background:var(--accent); transition:width .25s ease; }
 .results-head h2 { margin:0; font-size:20px; }
 .results-head span { color:var(--muted); font-size:13px; }
 .job-grid { display:grid; gap:12px; }

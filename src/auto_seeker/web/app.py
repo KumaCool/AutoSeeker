@@ -28,8 +28,18 @@ def create_app(database_path, default_page_size=50, cookie_path=None, request_ti
     app.state.user_name = None
     app.state.csrf_token = secrets.token_urlsafe(32)
     app.state.collect_runner = collect_runner
-    app.state.collect_lock = threading.Lock()
-    app.state.collect_notice = None
+    app.state.collect_stop = threading.Event()
+    app.state.collect_state = {
+        "running": False,
+        "stopping": False,
+        "run_id": None,
+        "pages_completed": 0,
+        "pages_requested": 0,
+        "matched_count": 0,
+        "new_count": 0,
+        "message": None,
+        "status": "idle",
+    }
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
     def shared_context():
@@ -105,7 +115,8 @@ def create_app(database_path, default_page_size=50, cookie_path=None, request_ti
                 "page": result,
                 "cookie_imported": request.query_params.get("cookie_imported") == "1",
                 "collect_status": request.query_params.get("collect_status"),
-                "collect_notice": app.state.collect_notice,
+                "collect_notice": app.state.collect_state["message"],
+                "collect_state": app.state.collect_state,
                 "previous_query": page_query(query.page - 1),
                 "next_query": page_query(query.page + 1),
             },
@@ -168,25 +179,72 @@ def create_app(database_path, default_page_size=50, cookie_path=None, request_ti
             )
         return RedirectResponse("/jobs?cookie_imported=1", status_code=303)
 
-    @app.post("/collect", include_in_schema=False)
-    def collect_from_web(csrf_token: str = Form(...)):
+    @app.post("/collect/start", include_in_schema=False)
+    def start_collection(csrf_token: str = Form(...)):
         if not secrets.compare_digest(csrf_token, app.state.csrf_token):
             raise HTTPException(status_code=403, detail="CSRF 校验失败")
-        if not app.state.collect_lock.acquire(blocking=False):
+        if app.state.collect_state["running"]:
             raise HTTPException(status_code=409, detail="采集任务正在运行")
-        try:
-            if app.state.collect_runner is None:
-                raise CollectionError("Web 采集器尚未配置")
-            result = app.state.collect_runner()
-            app.state.collect_notice = (
-                f"采集完成：批次 #{result.run_id}，匹配 {result.matched_count}，新增 {result.new_count}。"
-            )
-            status = "success"
-        except CollectionError as exc:
-            app.state.collect_notice = repository._redact_error(exc)
-            status = "error"
-        finally:
-            app.state.collect_lock.release()
-        return RedirectResponse(f"/jobs?collect_status={status}", status_code=303)
+        app.state.collect_stop.clear()
+        app.state.collect_state.update(
+            running=True,
+            stopping=False,
+            run_id=None,
+            pages_completed=0,
+            pages_requested=0,
+            matched_count=0,
+            new_count=0,
+            message=None,
+            status="running",
+        )
+
+        def update_progress(**values):
+            app.state.collect_state.update(values)
+
+        def run_in_background():
+            try:
+                if app.state.collect_runner is None:
+                    raise CollectionError("Web 采集器尚未配置")
+                result = app.state.collect_runner(progress=update_progress, should_stop=app.state.collect_stop.is_set)
+                stopped = app.state.collect_stop.is_set()
+                app.state.collect_state.update(
+                    running=False,
+                    stopping=False,
+                    status="stopped" if stopped else "success",
+                    run_id=result.run_id,
+                    pages_completed=result.pages_completed,
+                    matched_count=result.matched_count,
+                    new_count=result.new_count,
+                    message=(
+                        f"采集已停止：完成 {result.pages_completed} 页，匹配 {result.matched_count}。"
+                        if stopped
+                        else f"采集完成：批次 #{result.run_id}，匹配 {result.matched_count}，新增 {result.new_count}。"
+                    ),
+                )
+            except CollectionError as exc:
+                app.state.collect_state.update(
+                    running=False,
+                    stopping=False,
+                    status="error",
+                    message=repository._redact_error(exc),
+                )
+
+        threading.Thread(target=run_in_background, daemon=True).start()
+        return RedirectResponse("/jobs?collect_status=running", status_code=303)
+
+    @app.post("/collect/stop", include_in_schema=False)
+    def stop_collection(csrf_token: str = Form(...)):
+        if not secrets.compare_digest(csrf_token, app.state.csrf_token):
+            raise HTTPException(status_code=403, detail="CSRF 校验失败")
+        if not app.state.collect_state["running"]:
+            raise HTTPException(status_code=409, detail="当前没有采集任务")
+        app.state.collect_stop.set()
+        app.state.collect_state["stopping"] = True
+        app.state.collect_state["status"] = "stopping"
+        return RedirectResponse("/jobs?collect_status=stopping", status_code=303)
+
+    @app.get("/collect/status", include_in_schema=False)
+    def collection_status():
+        return dict(app.state.collect_state)
 
     return app

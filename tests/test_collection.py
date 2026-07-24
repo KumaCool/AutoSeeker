@@ -65,6 +65,68 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(len(repository.save_jobs.call_args.args[1]), 1)
         repository.fail_run.assert_called_once()
 
+    def test_reports_progress_after_each_completed_page(self):
+        payload = {"code": 0, "zpData": {"jobList": []}}
+        criteria = SearchCriteria("前端", "101200100", 15, 3)
+        client = Mock()
+        client.request_page.side_effect = [payload, payload]
+        repository = Mock()
+        repository.begin_run.return_value = 5
+        repository.save_jobs.return_value = 0
+        progress = Mock()
+
+        collect_jobs(
+            client,
+            Mock(),
+            repository,
+            criteria,
+            1,
+            2,
+            progress=progress,
+        )
+
+        self.assertEqual(progress.call_count, 3)
+        progress.assert_any_call(run_id=5, pages_completed=0, pages_requested=2, matched_count=0)
+        progress.assert_any_call(run_id=5, pages_completed=2, pages_requested=2, matched_count=0)
+
+    def test_cooperative_stop_finishes_current_page_and_returns_partial_result(self):
+        payload = {
+            "code": 0,
+            "zpData": {
+                "jobList": [
+                    {
+                        "salaryDesc": "15-20K",
+                        "jobExperience": "1-3年",
+                        "encryptJobId": "id",
+                        "jobName": "前端",
+                        "brandName": "公司",
+                    }
+                ]
+            },
+        }
+        criteria = SearchCriteria("前端", "101200100", 15, 3)
+        client = Mock()
+        client.request_page.return_value = payload
+        repository = Mock()
+        repository.begin_run.return_value = 6
+        repository.save_jobs.return_value = 1
+        should_stop = Mock(side_effect=[False, True])
+
+        result = collect_jobs(
+            client,
+            Mock(),
+            repository,
+            criteria,
+            1,
+            5,
+            should_stop=should_stop,
+        )
+
+        self.assertEqual(result.pages_completed, 1)
+        self.assertEqual(client.request_page.call_count, 1)
+        repository.fail_run.assert_called_once()
+        self.assertTrue(repository.fail_run.call_args.kwargs["partial"])
+
 
 if __name__ == "__main__":
     unittest.main()

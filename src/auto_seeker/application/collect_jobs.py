@@ -10,6 +10,10 @@ class CollectionError(RuntimeError):
         self.result = result
 
 
+class CollectionStopped(RuntimeError):
+    pass
+
+
 @dataclass(frozen=True)
 class CollectionResult:
     run_id: int
@@ -18,12 +22,28 @@ class CollectionResult:
     new_count: int
 
 
-def collect_jobs(client, stoken, repository, criteria, start_page, page_count, interval: float = 0, sleep=time.sleep):
+def collect_jobs(
+    client,
+    stoken,
+    repository,
+    criteria,
+    start_page,
+    page_count,
+    interval: float = 0,
+    sleep=time.sleep,
+    progress=None,
+    should_stop=None,
+):
     run_id = repository.begin_run(pages_requested=page_count)
     collected = {}
     failure = None
     pages_completed = 0
+    if progress:
+        progress(run_id=run_id, pages_completed=0, pages_requested=page_count, matched_count=0)
     for page in range(start_page, start_page + page_count):
+        if should_stop and should_stop():
+            failure = CollectionStopped("用户停止采集")
+            break
         try:
             payload = client.request_page(page)
             if payload.get("code") == 37:
@@ -35,6 +55,13 @@ def collect_jobs(client, stoken, repository, criteria, start_page, page_count, i
             for job in jobs:
                 collected[job.job_id] = job
             pages_completed += 1
+            if progress:
+                progress(
+                    run_id=run_id,
+                    pages_completed=pages_completed,
+                    pages_requested=page_count,
+                    matched_count=len(collected),
+                )
             sleep(interval)
         except Exception as exc:
             failure = exc
@@ -60,6 +87,8 @@ def collect_jobs(client, stoken, repository, criteria, start_page, page_count, i
             error=failure,
             partial=bool(collected),
         )
+        if isinstance(failure, CollectionStopped):
+            return result
         raise CollectionError(f"任务未完成，已保存部分结果：{failure}", result) from failure
     repository.complete_run(
         run_id,

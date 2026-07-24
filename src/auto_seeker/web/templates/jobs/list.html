@@ -22,7 +22,8 @@
   <button type="submit">筛选</button>
   <a class="secondary" href="/jobs">清空</a>
 </form>
-<section class="results-head"><div><h2>{{ page.total }} 个职位</h2>{% if page.total %}<span>第 {{ page.page }} 页 / 共 {{ page.page_count }} 页</span>{% endif %}</div><form action="/collect" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="collect-button" type="submit">采集</button></form></section>
+<section class="results-head"><div><h2>{{ page.total }} 个职位</h2>{% if page.total %}<span>第 {{ page.page }} 页 / 共 {{ page.page_count }} 页</span>{% endif %}</div>{% if collect_state.running %}<form action="/collect/stop" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="collect-button stop-button" type="submit">{% if collect_state.stopping %}停止中…{% else %}停止{% endif %}</button></form>{% else %}<form action="/collect/start" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="collect-button" type="submit">采集</button></form>{% endif %}</section>
+{% if collect_state.running %}<section class="collect-progress" data-status-url="/collect/status"><div class="progress-track"><div id="collect-progress-bar" class="progress-bar" style="width:0%"></div></div><p id="collect-progress-text">正在启动采集…</p></section>{% endif %}
 {% if page.items %}
 <div class="job-grid">
 {% for job in page.items %}
@@ -43,4 +44,5 @@
 {% else %}
 <section class="empty"><h2>尚无采集数据</h2><p>完成一次成功采集后，职位会显示在这里。</p></section>
 {% endif %}
+{% if collect_state.running %}<script src="{{ url_for('static', path='/app.js') }}" defer></script>{% endif %}
 {% endblock %}

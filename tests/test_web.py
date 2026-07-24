@@ -274,66 +274,76 @@ class WebCollectionTests(unittest.TestCase):
             response = TestClient(create_app(Path(directory) / "autoseeker.sqlite3")).get("/jobs")
 
         self.assertIn(">采集</button>", response.text)
-        self.assertIn('action="/collect"', response.text)
+        self.assertIn('action="/collect/start"', response.text)
 
-    def test_collect_requires_valid_csrf(self):
+    def test_start_requires_valid_csrf(self):
         runner = Mock()
         with tempfile.TemporaryDirectory() as directory:
             app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=runner)
-            response = TestClient(app).post("/collect", data={"csrf_token": "wrong"})
+            response = TestClient(app).post("/collect/start", data={"csrf_token": "wrong"})
 
         self.assertEqual(response.status_code, 403)
         runner.assert_not_called()
 
-    def test_successful_collect_redirects_with_summary(self):
-        result = Mock(run_id=7, matched_count=12, new_count=3)
-        runner = Mock(return_value=result)
-        with tempfile.TemporaryDirectory() as directory:
-            app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=runner)
-            client = TestClient(app)
-            response = client.post("/collect", data={"csrf_token": app.state.csrf_token}, follow_redirects=False)
-            page = client.get(response.headers["location"])
-
-        self.assertEqual(response.status_code, 303)
-        self.assertIn("collect_status=success", response.headers["location"])
-        self.assertIn("批次 #7", page.text)
-        self.assertIn("匹配 12", page.text)
-        self.assertIn("新增 3", page.text)
-
-    def test_collection_failure_redirects_with_safe_message(self):
-        from auto_seeker.application.collect_jobs import CollectionError
-
-        runner = Mock(side_effect=CollectionError("BOSS API code=36: 账户异常"))
-        with tempfile.TemporaryDirectory() as directory:
-            app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=runner)
-            client = TestClient(app)
-            response = client.post("/collect", data={"csrf_token": app.state.csrf_token}, follow_redirects=False)
-            page = client.get(response.headers["location"])
-
-        self.assertEqual(response.status_code, 303)
-        self.assertIn("collect_status=error", response.headers["location"])
-        self.assertIn("code=36", page.text)
-
-    def test_concurrent_collection_returns_conflict(self):
+    def test_start_runs_in_background_and_status_reports_progress(self):
         started = threading.Event()
         release = threading.Event()
 
-        def runner():
+        def runner(progress=None, should_stop=None):
+            progress(run_id=7, pages_completed=1, pages_requested=5, matched_count=12)
             started.set()
             release.wait(timeout=2)
-            return Mock(run_id=1, matched_count=0, new_count=0)
+            return Mock(run_id=7, pages_completed=1, matched_count=12, new_count=3)
 
         with tempfile.TemporaryDirectory() as directory:
             app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=runner)
             client = TestClient(app)
-            first = threading.Thread(target=lambda: client.post("/collect", data={"csrf_token": app.state.csrf_token}))
-            first.start()
+            response = client.post("/collect/start", data={"csrf_token": app.state.csrf_token}, follow_redirects=False)
             started.wait(timeout=1)
-            second = client.post("/collect", data={"csrf_token": app.state.csrf_token})
+            running = client.get("/collect/status").json()
             release.set()
-            first.join(timeout=2)
+            for _ in range(50):
+                finished = client.get("/collect/status").json()
+                if not finished["running"]:
+                    break
+                threading.Event().wait(0.01)
 
-        self.assertEqual(second.status_code, 409)
+        self.assertEqual(response.status_code, 303)
+        self.assertTrue(running["running"])
+        self.assertEqual(running["pages_completed"], 1)
+        self.assertEqual(running["pages_requested"], 5)
+        self.assertEqual(running["matched_count"], 12)
+        self.assertFalse(finished["running"])
+        self.assertEqual(finished["new_count"], 3)
+
+    def test_running_page_shows_stop_button(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=Mock())
+            app.state.collect_state["running"] = True
+            response = TestClient(app).get("/jobs")
+
+        self.assertIn(">停止</button>", response.text)
+        self.assertIn('action="/collect/stop"', response.text)
+
+    def test_stop_sets_cooperative_stop_flag(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=Mock())
+            app.state.collect_state["running"] = True
+            response = TestClient(app).post(
+                "/collect/stop", data={"csrf_token": app.state.csrf_token}, follow_redirects=False
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertTrue(app.state.collect_stop.is_set())
+        self.assertTrue(app.state.collect_state["stopping"])
+
+    def test_second_start_returns_conflict(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=Mock())
+            app.state.collect_state["running"] = True
+            response = TestClient(app).post("/collect/start", data={"csrf_token": app.state.csrf_token})
+
+        self.assertEqual(response.status_code, 409)
 
 
 if __name__ == "__main__":

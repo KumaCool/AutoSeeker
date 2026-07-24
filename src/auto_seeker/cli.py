@@ -132,7 +132,7 @@ def main(argv: Sequence[str] | None = None):
         if not cookie_path.is_absolute():
             cookie_path = PROJECT_ROOT / cookie_path
 
-        def run_collection():
+        def run_collection(progress=None, should_stop=None):
             cookies = load_cookie_file(
                 cookie_path,
                 PROJECT_ROOT / "cookies.json",
@@ -160,6 +160,8 @@ def main(argv: Sequence[str] | None = None):
                 config.search.start_page,
                 config.search.page_count,
                 config.request.interval_seconds,
+                progress=progress,
+                should_stop=should_stop,
             )
 
         app = create_app(
