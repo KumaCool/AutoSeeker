@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     degree TEXT NOT NULL,
     location TEXT NOT NULL,
     boss TEXT NOT NULL,
+    recruiter_status TEXT NOT NULL DEFAULT '未知',
     skills TEXT NOT NULL,
     url TEXT NOT NULL,
     first_seen_at TEXT NOT NULL,
@@ -56,6 +57,9 @@ class SQLiteJobRepository:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as connection:
             connection.executescript(SCHEMA)
+            columns = {row[1] for row in connection.execute("PRAGMA table_info(jobs)")}
+            if "recruiter_status" not in columns:
+                connection.execute("ALTER TABLE jobs ADD COLUMN recruiter_status TEXT NOT NULL DEFAULT '未知'")
 
     @contextmanager
     def connect(self):
@@ -142,7 +146,7 @@ class SQLiteJobRepository:
                     connection.execute(
                         """UPDATE jobs SET
                            job_name=?, company=?, salary=?, salary_low=?, salary_high=?, experience=?, degree=?,
-                           location=?, boss=?, skills=?, url=?, last_seen_at=?, last_seen_run_id=?, updated_at=?
+                           location=?, boss=?, recruiter_status=?, skills=?, url=?, last_seen_at=?, last_seen_run_id=?, updated_at=?
                            WHERE job_id=?""",
                         (
                             item.job_name,
@@ -154,6 +158,7 @@ class SQLiteJobRepository:
                             item.degree,
                             item.location,
                             item.boss,
+                            item.recruiter_status,
                             item.skills,
                             item.url,
                             item.fetched_at,
@@ -166,9 +171,9 @@ class SQLiteJobRepository:
                     connection.execute(
                         """INSERT INTO jobs(
                            job_id, job_name, company, salary, salary_low, salary_high, experience, degree, location,
-                           boss, skills, url, first_seen_at, last_seen_at, first_seen_run_id, last_seen_run_id,
+                           boss, recruiter_status, skills, url, first_seen_at, last_seen_at, first_seen_run_id, last_seen_run_id,
                            created_at, updated_at
-                           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                         (
                             item.job_id,
                             item.job_name,
@@ -180,6 +185,7 @@ class SQLiteJobRepository:
                             item.degree,
                             item.location,
                             item.boss,
+                            item.recruiter_status,
                             item.skills,
                             item.url,
                             item.fetched_at,

@@ -26,6 +26,7 @@ class DomainTests(unittest.TestCase):
                         "brandName": "示例公司",
                         "cityName": "武汉",
                         "skills": ["Vue", "TypeScript"],
+                        "bossOnline": True,
                     }
                 ]
             }
@@ -37,6 +38,7 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(jobs[0].job_id, "job-id")
         self.assertEqual(jobs[0].skills, "Vue、TypeScript")
         self.assertEqual(jobs[0].url, "https://www.zhipin.com/job_detail/job-id.html")
+        self.assertEqual(jobs[0].recruiter_status, "在线")
 
 
 if __name__ == "__main__":

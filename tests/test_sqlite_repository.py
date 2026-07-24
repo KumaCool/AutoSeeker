@@ -38,6 +38,7 @@ class SQLiteSchemaTests(unittest.TestCase):
                 journal_mode = connection.execute("PRAGMA journal_mode").fetchone()[0]
                 busy_timeout = connection.execute("PRAGMA busy_timeout").fetchone()[0]
                 foreign_keys = connection.execute("PRAGMA foreign_keys").fetchone()[0]
+                columns = {row[1] for row in connection.execute("PRAGMA table_info(jobs)")}
 
             self.assertEqual(tables, {"jobs", "collection_runs", "sqlite_sequence"})
             self.assertTrue(
@@ -49,6 +50,22 @@ class SQLiteSchemaTests(unittest.TestCase):
             self.assertEqual(busy_timeout, 5000)
             self.assertEqual(foreign_keys, 1)
             self.assertTrue(path.is_file())
+            self.assertIn("recruiter_status", columns)
+
+    def test_existing_database_is_upgraded_with_recruiter_status(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "legacy.sqlite3"
+            repository = SQLiteJobRepository(path)
+            with repository.connect() as connection:
+                connection.execute("ALTER TABLE jobs RENAME TO jobs_old")
+                connection.execute("CREATE TABLE jobs AS SELECT * FROM jobs_old")
+                connection.execute("ALTER TABLE jobs DROP COLUMN recruiter_status")
+
+            SQLiteJobRepository(path)
+
+            with sqlite3.connect(path) as connection:
+                columns = {row[1] for row in connection.execute("PRAGMA table_info(jobs)")}
+            self.assertIn("recruiter_status", columns)
 
     def test_empty_database_does_not_read_legacy_excel(self):
         with tempfile.TemporaryDirectory() as directory:

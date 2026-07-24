@@ -24,6 +24,7 @@ class Job:
     skills: str
     url: str
     job_id: str
+    recruiter_status: str = "未知"
 
     def to_dict(self):
         return asdict(self)
