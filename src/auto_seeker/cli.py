@@ -106,9 +106,16 @@ def main(argv: Sequence[str] | None = None):
         print(f"BOSS 登录检查成功，业务码={code}")
         return 0
     if args.command == "web":
+        import requests
         import uvicorn
 
+        from auto_seeker.application.collect_jobs import collect_jobs
+        from auto_seeker.auth import load_cookie_file
         from auto_seeker.config import PROJECT_ROOT, load_config
+        from auto_seeker.infrastructure.boss_client import BossClient
+        from auto_seeker.infrastructure.sqlite_repository import SQLiteJobRepository
+        from auto_seeker.infrastructure.stoken import StokenService
+        from auto_seeker.models import SearchCriteria
         from auto_seeker.web.app import create_app
 
         config = load_config(
@@ -124,11 +131,43 @@ def main(argv: Sequence[str] | None = None):
         cookie_path = config.runtime.cookie_file
         if not cookie_path.is_absolute():
             cookie_path = PROJECT_ROOT / cookie_path
+
+        def run_collection():
+            cookies = load_cookie_file(
+                cookie_path,
+                PROJECT_ROOT / "cookies.json",
+                cookie_path.with_suffix(".txt"),
+                PROJECT_ROOT / "cookies.txt",
+            )
+            session = requests.Session()
+            session.cookies.update(cookies)
+            criteria = SearchCriteria(
+                config.search.keyword,
+                config.search.city_code,
+                config.search.minimum_salary_k,
+                config.search.maximum_experience_years,
+            )
+            client = BossClient(session, criteria, config.search.page_size, config.request.timeout_seconds)
+            cache_dir = config.runtime.cache_dir
+            if not cache_dir.is_absolute():
+                cache_dir = PROJECT_ROOT / cache_dir
+            stoken = StokenService(session, client.page_url, cache_dir, client.user_agent, client.timeout)
+            return collect_jobs(
+                client,
+                stoken,
+                SQLiteJobRepository(database_path),
+                criteria,
+                config.search.start_page,
+                config.search.page_count,
+                config.request.interval_seconds,
+            )
+
         app = create_app(
             database_path,
             default_page_size=config.web.page_size,
             cookie_path=cookie_path,
             request_timeout=config.request.timeout_seconds,
+            collect_runner=run_collection,
         )
         uvicorn.run(app, host=config.web.host, port=config.web.port)
         return 0

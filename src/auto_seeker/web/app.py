@@ -1,4 +1,5 @@
 import secrets
+import threading
 from pathlib import Path
 from urllib.parse import urlencode, urlparse
 
@@ -7,6 +8,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from auto_seeker.application.collect_jobs import CollectionError
 from auto_seeker.application.query_jobs import JobQuery, SortOrder
 from auto_seeker.auth import AuthError, import_verified_cookies
 from auto_seeker.infrastructure.sqlite_repository import SQLiteJobRepository
@@ -16,7 +18,7 @@ templates = Jinja2Templates(directory=WEB_DIR / "templates")
 MAX_COOKIE_FILE_SIZE = 1024 * 1024
 
 
-def create_app(database_path, default_page_size=50, cookie_path=None, request_timeout=30):
+def create_app(database_path, default_page_size=50, cookie_path=None, request_timeout=30, collect_runner=None):
     app = FastAPI(title="AutoSeeker", docs_url=None, redoc_url=None)
     repository = SQLiteJobRepository(database_path)
     app.state.repository = repository
@@ -25,6 +27,9 @@ def create_app(database_path, default_page_size=50, cookie_path=None, request_ti
     )
     app.state.user_name = None
     app.state.csrf_token = secrets.token_urlsafe(32)
+    app.state.collect_runner = collect_runner
+    app.state.collect_lock = threading.Lock()
+    app.state.collect_notice = None
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
     def shared_context():
@@ -99,6 +104,8 @@ def create_app(database_path, default_page_size=50, cookie_path=None, request_ti
                 "query": query,
                 "page": result,
                 "cookie_imported": request.query_params.get("cookie_imported") == "1",
+                "collect_status": request.query_params.get("collect_status"),
+                "collect_notice": app.state.collect_notice,
                 "previous_query": page_query(query.page - 1),
                 "next_query": page_query(query.page + 1),
             },
@@ -160,5 +167,26 @@ def create_app(database_path, default_page_size=50, cookie_path=None, request_ti
                 status_code=400,
             )
         return RedirectResponse("/jobs?cookie_imported=1", status_code=303)
+
+    @app.post("/collect", include_in_schema=False)
+    def collect_from_web(csrf_token: str = Form(...)):
+        if not secrets.compare_digest(csrf_token, app.state.csrf_token):
+            raise HTTPException(status_code=403, detail="CSRF 校验失败")
+        if not app.state.collect_lock.acquire(blocking=False):
+            raise HTTPException(status_code=409, detail="采集任务正在运行")
+        try:
+            if app.state.collect_runner is None:
+                raise CollectionError("Web 采集器尚未配置")
+            result = app.state.collect_runner()
+            app.state.collect_notice = (
+                f"采集完成：批次 #{result.run_id}，匹配 {result.matched_count}，新增 {result.new_count}。"
+            )
+            status = "success"
+        except CollectionError as exc:
+            app.state.collect_notice = repository._redact_error(exc)
+            status = "error"
+        finally:
+            app.state.collect_lock.release()
+        return RedirectResponse(f"/jobs?collect_status={status}", status_code=303)
 
     return app

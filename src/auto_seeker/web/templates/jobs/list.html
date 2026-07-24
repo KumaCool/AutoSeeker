@@ -2,6 +2,7 @@
 {% block title %}职位 · AutoSeeker{% endblock %}
 {% block content %}
 {% if cookie_imported %}<div class="notice">Cookie 导入成功，已登录为 {{ user_name }}。</div>{% endif %}
+{% if collect_status and collect_notice %}<div class="notice {% if collect_status == 'error' %}notice-error{% endif %}">{{ collect_notice }}</div>{% endif %}
 <section class="hero">
   <p class="eyebrow">JOB DISCOVERY</p>
   <h1>找到更值得关注的机会</h1>
@@ -21,7 +22,7 @@
   <button type="submit">筛选</button>
   <a class="secondary" href="/jobs">清空</a>
 </form>
-<section class="results-head"><h2>{{ page.total }} 个职位</h2>{% if page.total %}<span>第 {{ page.page }} 页 / 共 {{ page.page_count }} 页</span>{% endif %}</section>
+<section class="results-head"><div><h2>{{ page.total }} 个职位</h2>{% if page.total %}<span>第 {{ page.page }} 页 / 共 {{ page.page_count }} 页</span>{% endif %}</div><form action="/collect" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="collect-button" type="submit">采集</button></form></section>
 {% if page.items %}
 <div class="job-grid">
 {% for job in page.items %}

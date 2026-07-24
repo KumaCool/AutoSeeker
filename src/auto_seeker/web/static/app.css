@@ -10,6 +10,7 @@ a { color:var(--accent); text-decoration:none; }
 .user-name { padding:6px 11px; border-radius:999px; color:var(--accent); background:var(--accent-soft); font-size:13px; font-weight:700; }
 .hidden-upload { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
 .notice { margin-bottom:20px; padding:12px 16px; border:1px solid #b8ded4; border-radius:10px; color:var(--accent); background:var(--accent-soft); }
+.notice-error { color:var(--danger); border-color:#f5b8b2; background:#feeceb; }
 .container { max-width:1180px; margin:0 auto; padding:42px 24px 80px; }
 .hero { margin-bottom:28px; }
 .eyebrow { color:var(--accent); font-size:12px; font-weight:750; letter-spacing:.14em; }
@@ -24,6 +25,9 @@ button,.secondary { height:40px; border:0; border-radius:9px; padding:0 18px; di
 button { color:#fff; background:var(--accent); }
 .secondary { color:var(--text); background:#eef0f3; }
 .results-head { margin:32px 0 16px; display:flex; justify-content:space-between; align-items:end; }
+.results-head>div { display:flex; gap:12px; align-items:baseline; }
+.results-head form { margin:0; }
+.collect-button { height:38px; padding:0 18px; }
 .results-head h2 { margin:0; font-size:20px; }
 .results-head span { color:var(--muted); font-size:13px; }
 .job-grid { display:grid; gap:12px; }

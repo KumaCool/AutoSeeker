@@ -69,13 +69,14 @@ class CliTests(unittest.TestCase):
     def test_web_command_runs_uvicorn_with_configured_values(self):
         from auto_seeker import cli
 
-        with patch("uvicorn.run") as run:
+        with patch("uvicorn.run") as run, patch("auto_seeker.web.app.create_app") as create_app:
             result = cli.main(["web", "--host", "127.0.0.2", "--port", "9090"])
 
         self.assertEqual(result, 0)
         run.assert_called_once()
         self.assertEqual(run.call_args.kwargs["host"], "127.0.0.2")
         self.assertEqual(run.call_args.kwargs["port"], 9090)
+        self.assertTrue(callable(create_app.call_args.kwargs["collect_runner"]))
 
 
 if __name__ == "__main__":

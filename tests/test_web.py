@@ -1,7 +1,8 @@
 import tempfile
+import threading
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
 
@@ -265,6 +266,74 @@ class CollectionRunsWebTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("还没有采集记录", response.text)
+
+
+class WebCollectionTests(unittest.TestCase):
+    def test_jobs_heading_has_collect_button(self):
+        with tempfile.TemporaryDirectory() as directory:
+            response = TestClient(create_app(Path(directory) / "autoseeker.sqlite3")).get("/jobs")
+
+        self.assertIn(">采集</button>", response.text)
+        self.assertIn('action="/collect"', response.text)
+
+    def test_collect_requires_valid_csrf(self):
+        runner = Mock()
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=runner)
+            response = TestClient(app).post("/collect", data={"csrf_token": "wrong"})
+
+        self.assertEqual(response.status_code, 403)
+        runner.assert_not_called()
+
+    def test_successful_collect_redirects_with_summary(self):
+        result = Mock(run_id=7, matched_count=12, new_count=3)
+        runner = Mock(return_value=result)
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=runner)
+            client = TestClient(app)
+            response = client.post("/collect", data={"csrf_token": app.state.csrf_token}, follow_redirects=False)
+            page = client.get(response.headers["location"])
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("collect_status=success", response.headers["location"])
+        self.assertIn("批次 #7", page.text)
+        self.assertIn("匹配 12", page.text)
+        self.assertIn("新增 3", page.text)
+
+    def test_collection_failure_redirects_with_safe_message(self):
+        from auto_seeker.application.collect_jobs import CollectionError
+
+        runner = Mock(side_effect=CollectionError("BOSS API code=36: 账户异常"))
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=runner)
+            client = TestClient(app)
+            response = client.post("/collect", data={"csrf_token": app.state.csrf_token}, follow_redirects=False)
+            page = client.get(response.headers["location"])
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("collect_status=error", response.headers["location"])
+        self.assertIn("code=36", page.text)
+
+    def test_concurrent_collection_returns_conflict(self):
+        started = threading.Event()
+        release = threading.Event()
+
+        def runner():
+            started.set()
+            release.wait(timeout=2)
+            return Mock(run_id=1, matched_count=0, new_count=0)
+
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3", collect_runner=runner)
+            client = TestClient(app)
+            first = threading.Thread(target=lambda: client.post("/collect", data={"csrf_token": app.state.csrf_token}))
+            first.start()
+            started.wait(timeout=1)
+            second = client.post("/collect", data={"csrf_token": app.state.csrf_token})
+            release.set()
+            first.join(timeout=2)
+
+        self.assertEqual(second.status_code, 409)
 
 
 if __name__ == "__main__":
