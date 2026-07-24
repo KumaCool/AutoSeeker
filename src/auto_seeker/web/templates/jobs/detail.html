@@ -6,7 +6,7 @@
   <div class="detail-heading"><div><p class="eyebrow">JOB DETAIL</p><h1>{{ job.job_name }}</h1><p class="company">{{ job.company }}</p></div><span class="salary">{{ job.salary }}</span></div>
   <div class="detail-grid">
     <section><h2>职位信息</h2><dl>
-      <div><dt>经验</dt><dd>{{ job.experience }}</dd></div><div><dt>学历</dt><dd>{{ job.degree }}</dd></div><div><dt>地点</dt><dd>{{ job.location }}</dd></div><div><dt>招聘者</dt><dd>{{ job.boss }}</dd></div>
+      <div><dt>经验</dt><dd>{{ job.experience }}</dd></div><div><dt>学历</dt><dd>{{ job.degree }}</dd></div><div><dt>地点</dt><dd>{{ job.location }}</dd></div><div><dt>招聘者</dt><dd>{{ job.boss }}</dd></div><div><dt>招聘者状态</dt><dd>{{ job.recruiter_status }}</dd></div>
     </dl></section>
     <section><h2>发现记录</h2><dl>
       <div><dt>首次发现</dt><dd>{{ job.first_seen_at }}</dd></div><div><dt>最后发现</dt><dd>{{ job.last_seen_at }}</dd></div><div><dt>首次批次</dt><dd>#{{ job.first_seen_run_id }}</dd></div><div><dt>最近批次</dt><dd>#{{ job.last_seen_run_id }}</dd></div>

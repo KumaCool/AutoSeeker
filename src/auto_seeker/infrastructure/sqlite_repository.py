@@ -227,6 +227,9 @@ class SQLiteJobRepository:
         if query.location:
             clauses.append("location LIKE ?")
             parameters.append(f"%{query.location}%")
+        if query.recruiter_status:
+            clauses.append("recruiter_status = ?")
+            parameters.append(query.recruiter_status)
         if query.maximum_experience is not None:
             clauses.append("experience_max_years(experience) <= ?")
             parameters.append(query.maximum_experience)

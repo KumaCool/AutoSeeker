@@ -13,6 +13,7 @@
   <label>最低薪资(K)<input type="number" {% if query.minimum_salary is not none %}name="minimum_salary" value="{{ query.minimum_salary }}"{% else %}data-name="minimum_salary"{% endif %} min="0" oninput="this.name=this.dataset.name||this.name"></label>
   <label>最大经验(年)<input type="number" {% if query.maximum_experience is not none %}name="maximum_experience" value="{{ query.maximum_experience }}"{% else %}data-name="maximum_experience"{% endif %} min="0" oninput="this.name=this.dataset.name||this.name"></label>
   <label>地点<input name="location" value="{{ query.location or '' }}" placeholder="武汉"></label>
+  <label>招聘者状态<select name="recruiter_status"><option value="">全部</option><option value="在线" {% if query.recruiter_status == '在线' %}selected{% endif %}>在线</option><option value="离线" {% if query.recruiter_status == '离线' %}selected{% endif %}>离线</option><option value="未知" {% if query.recruiter_status == '未知' %}selected{% endif %}>未知</option></select></label>
   <label>排序<select name="sort">
     <option value="newest" {% if query.sort.value == 'newest' %}selected{% endif %}>新增优先</option>
     <option value="salary_desc" {% if query.sort.value == 'salary_desc' %}selected{% endif %}>薪资从高到低</option>
@@ -31,7 +32,7 @@
   <div class="job-card-top">{% if job.is_new %}<span class="badge">新增</span>{% endif %}<span class="salary">{{ job.salary }}</span></div>
   <h3><a href="/jobs/{{ job.job_id }}">{{ job.job_name }}</a></h3>
   <p class="company">{{ job.company }}</p>
-  <div class="meta"><span>{{ job.experience }}</span><span>{{ job.degree }}</span><span>{{ job.location }}</span></div>
+  <div class="meta"><span>{{ job.experience }}</span><span>{{ job.degree }}</span><span>{{ job.location }}</span><span class="recruiter-status recruiter-{{ job.recruiter_status }}">招聘者{{ job.recruiter_status }}</span></div>
   <p class="skills">{{ job.skills }}</p>
   <footer><span>最后发现 {{ job.last_seen_at }}</span><a href="/jobs/{{ job.job_id }}">查看详情 →</a></footer>
 </article>

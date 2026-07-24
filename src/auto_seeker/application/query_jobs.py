@@ -20,6 +20,7 @@ class JobQuery:
     minimum_salary: float | None = None
     maximum_experience: int | None = None
     location: str | None = None
+    recruiter_status: str | None = None
     new_only: bool = False
     run_id: int | None = None
     sort: SortOrder = SortOrder.NEWEST
@@ -29,6 +30,9 @@ class JobQuery:
     def __post_init__(self):
         q = self.q.strip() if self.q else None
         location = self.location.strip() if self.location else None
+        recruiter_status = self.recruiter_status.strip() if self.recruiter_status else None
+        if recruiter_status not in {None, "在线", "离线", "未知"}:
+            raise QueryError(f"不支持的招聘者状态：{recruiter_status}")
         try:
             sort = self.sort if isinstance(self.sort, SortOrder) else SortOrder(self.sort)  # type: ignore[arg-type]
         except ValueError as exc:
@@ -45,6 +49,7 @@ class JobQuery:
             raise QueryError("run_id 必须大于等于 1")
         object.__setattr__(self, "q", q or None)
         object.__setattr__(self, "location", location or None)
+        object.__setattr__(self, "recruiter_status", recruiter_status)
         object.__setattr__(self, "sort", sort)
 
     @property

@@ -18,6 +18,11 @@ class JobQueryModelTests(unittest.TestCase):
         self.assertEqual(query.page_size, 50)
         self.assertEqual(query.sort, SortOrder.NEWEST)
         self.assertFalse(query.new_only)
+        self.assertIsNone(query.recruiter_status)
+
+    def test_rejects_unknown_recruiter_status(self):
+        with self.assertRaises(QueryError):
+            JobQuery(recruiter_status="忙碌")
 
     def test_rejects_invalid_pagination_salary_and_experience(self):
         invalid = [

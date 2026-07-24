@@ -46,6 +46,9 @@ button { color:#fff; background:var(--accent); }
 .company,.skills { color:var(--muted); }
 .company { margin:0 0 12px; }
 .meta span { padding:4px 8px; border-radius:6px; background:#f0f2f5; font-size:12px; }
+.meta .recruiter-在线 { color:var(--accent); background:var(--accent-soft); }
+.meta .recruiter-离线 { color:var(--muted); background:#eef0f3; }
+.meta .recruiter-未知 { color:#8a5a00; background:#fff3d6; }
 .skills { margin:14px 0; }
 .job-card footer { justify-content:space-between; padding-top:14px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; }
 .empty { padding:70px 20px; text-align:center; border:1px dashed #cbd1da; border-radius:14px; background:var(--surface); }
