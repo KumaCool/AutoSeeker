@@ -2,9 +2,16 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
-from auto_seeker.auth import AuthError, import_cookies, load_cookie_file, validate_cookies
+from auto_seeker.auth import (
+    AuthError,
+    fetch_user_name,
+    import_cookies,
+    import_verified_cookies,
+    load_cookie_file,
+    validate_cookies,
+)
 
 
 class AuthServiceTests(unittest.TestCase):
@@ -95,6 +102,50 @@ class AuthServiceTests(unittest.TestCase):
         self.assertEqual(result, 0)
         session.post.assert_called_once()
         self.assertEqual(session.post.call_args.kwargs["data"]["pageSize"], "1")
+
+    def test_fetch_user_name_reads_nested_base_info(self):
+        session = Mock()
+        response = Mock()
+        response.json.return_value = {"code": 0, "zpData": {"baseInfo": {"name": "Kuma"}}}
+        session.get.return_value = response
+
+        name = fetch_user_name({"zp_at": "token"}, session=session)
+
+        self.assertEqual(name, "Kuma")
+        session.get.assert_called_once()
+
+    def test_fetch_user_name_rejects_business_error(self):
+        session = Mock()
+        response = Mock()
+        response.json.return_value = {"code": 36, "message": "账户异常"}
+        session.get.return_value = response
+
+        with self.assertRaisesRegex(AuthError, "业务码=36"):
+            fetch_user_name({"zp_at": "token"}, session=session)
+
+    def test_verified_import_does_not_replace_existing_file_on_profile_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "cookies.json"
+            destination.write_text('[{"name":"zp_at","value":"old","domain":".zhipin.com"}]')
+            source = json.dumps([{"name": "zp_at", "value": "new", "domain": ".zhipin.com"}]).encode()
+
+            with patch("auto_seeker.auth.fetch_user_name", side_effect=AuthError("业务码=36")):
+                with self.assertRaises(AuthError):
+                    import_verified_cookies(source, destination)
+
+            self.assertIn('"old"', destination.read_text())
+
+    def test_verified_import_writes_0600_and_returns_name(self):
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "cookies.json"
+            source = json.dumps([{"name": "zp_at", "value": "new", "domain": ".zhipin.com"}]).encode()
+
+            with patch("auto_seeker.auth.fetch_user_name", return_value="Kuma"):
+                name = import_verified_cookies(source, destination)
+
+            self.assertEqual(name, "Kuma")
+            self.assertEqual(destination.stat().st_mode & 0o777, 0o600)
+            self.assertIn('"new"', destination.read_text())
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}职位 · AutoSeeker{% endblock %}
 {% block content %}
+{% if cookie_imported %}<div class="notice">Cookie 导入成功，已登录为 {{ user_name }}。</div>{% endif %}
 <section class="hero">
   <p class="eyebrow">JOB DISCOVERY</p>
   <h1>找到更值得关注的机会</h1>

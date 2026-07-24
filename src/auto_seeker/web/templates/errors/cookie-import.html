@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Cookie 导入失败 · AutoSeeker{% endblock %}
+{% block content %}
+<section class="empty error-page">
+  <p class="eyebrow">COOKIE IMPORT FAILED</p>
+  <h1>登录 Cookie 导入失败</h1>
+  <p>{{ error }}</p>
+  <a class="primary-link" href="/jobs">返回职位列表</a>
+</section>
+{% endblock %}

@@ -77,6 +77,80 @@ class WebHealthTests(unittest.TestCase):
         self.assertIn("--accent", response.text)
 
 
+class CookieImportWebTests(unittest.TestCase):
+    def test_navigation_shows_import_button_when_logged_out(self):
+        with tempfile.TemporaryDirectory() as directory:
+            response = TestClient(create_app(Path(directory) / "autoseeker.sqlite3")).get("/jobs")
+
+        self.assertIn("导入登录 Cookie", response.text)
+
+    def test_verified_upload_redirects_and_navigation_shows_user_name(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            app = create_app(root / "autoseeker.sqlite3", cookie_path=root / "cookies.json")
+            client = TestClient(app)
+            with patch("auto_seeker.web.app.import_verified_cookies", return_value="Kuma") as importer:
+                response = client.post(
+                    "/auth/cookies",
+                    data={"csrf_token": app.state.csrf_token},
+                    files={"cookie_file": ("cookies.json", b"[]", "application/json")},
+                    follow_redirects=False,
+                )
+
+            self.assertEqual(response.status_code, 303)
+            self.assertEqual(response.headers["location"], "/jobs?cookie_imported=1")
+            importer.assert_called_once()
+            self.assertIn("Kuma", client.get("/jobs").text)
+
+    def test_upload_rejects_wrong_csrf_without_importing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3")
+            with patch("auto_seeker.web.app.import_verified_cookies") as importer:
+                response = TestClient(app).post(
+                    "/auth/cookies",
+                    data={"csrf_token": "wrong"},
+                    files={"cookie_file": ("cookies.json", b"[]", "application/json")},
+                )
+
+        self.assertEqual(response.status_code, 403)
+        importer.assert_not_called()
+
+    def test_upload_rejects_non_json_and_oversized_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3")
+            client = TestClient(app)
+            wrong_type = client.post(
+                "/auth/cookies",
+                data={"csrf_token": app.state.csrf_token},
+                files={"cookie_file": ("cookies.txt", b"x", "text/plain")},
+            )
+            too_large = client.post(
+                "/auth/cookies",
+                data={"csrf_token": app.state.csrf_token},
+                files={"cookie_file": ("cookies.json", b"x" * (1024 * 1024 + 1), "application/json")},
+            )
+
+        self.assertEqual(wrong_type.status_code, 400)
+        self.assertEqual(too_large.status_code, 413)
+
+    def test_failed_verification_renders_error_and_keeps_user_logged_out(self):
+        from auto_seeker.auth import AuthError
+
+        with tempfile.TemporaryDirectory() as directory:
+            app = create_app(Path(directory) / "autoseeker.sqlite3")
+            client = TestClient(app)
+            with patch("auto_seeker.web.app.import_verified_cookies", side_effect=AuthError("业务码=36")):
+                response = client.post(
+                    "/auth/cookies",
+                    data={"csrf_token": app.state.csrf_token},
+                    files={"cookie_file": ("cookies.json", b"[]", "application/json")},
+                )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("业务码=36", response.text)
+        self.assertIsNone(app.state.user_name)
+
+
 class JobListWebTests(unittest.TestCase):
     def test_empty_database_shows_friendly_state(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -121,7 +121,15 @@ def main(argv: Sequence[str] | None = None):
         database_path = config.storage.database
         if not database_path.is_absolute():
             database_path = PROJECT_ROOT / database_path
-        app = create_app(database_path, default_page_size=config.web.page_size)
+        cookie_path = config.runtime.cookie_file
+        if not cookie_path.is_absolute():
+            cookie_path = PROJECT_ROOT / cookie_path
+        app = create_app(
+            database_path,
+            default_page_size=config.web.page_size,
+            cookie_path=cookie_path,
+            request_timeout=config.request.timeout_seconds,
+        )
         uvicorn.run(app, host=config.web.host, port=config.web.port)
         return 0
     if args.command == "config" and args.config_command == "show":

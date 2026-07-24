@@ -9,7 +9,13 @@
 <body>
 <header class="topbar">
   <a class="brand" href="/jobs">AutoSeeker</a>
-  <nav><a href="/jobs">职位</a><a href="/runs">采集记录</a></nav>
+  <nav><a href="/jobs">职位</a><a href="/runs">采集记录</a>
+    {% if user_name %}<span class="user-name">{{ user_name }}</span>{% else %}<button class="nav-button" type="button" onclick="document.getElementById('cookie-import').click()">导入登录 Cookie</button>{% endif %}
+  </nav>
+  <form class="hidden-upload" action="/auth/cookies" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input id="cookie-import" type="file" name="cookie_file" accept="application/json,.json" onchange="this.form.submit()">
+  </form>
 </header>
 <main class="container">{% block content %}{% endblock %}</main>
 </body>

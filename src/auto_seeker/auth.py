@@ -5,6 +5,7 @@ from pathlib import Path
 import requests
 
 API_URL = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
+PROFILE_URL = "https://www.zhipin.com/wapi/zpgeek/resume/baseinfo/query.json"
 
 
 class AuthError(ValueError):
@@ -35,6 +36,55 @@ def import_cookies(source: str | Path, destination: str | Path):
     temporary.replace(destination)
     os.chmod(destination, 0o600)
     return len(cookies)
+
+
+def _write_cookies(cookies, destination):
+    destination = Path(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_suffix(destination.suffix + ".tmp")
+    temporary.write_text(json.dumps(cookies, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.chmod(temporary, 0o600)
+    temporary.replace(destination)
+    os.chmod(destination, 0o600)
+
+
+def fetch_user_name(cookies, session=None, timeout=30):
+    session = session or requests.Session()
+    session.cookies.update(cookie_dict(cookies))
+    response = session.get(
+        PROFILE_URL,
+        headers={
+            "user-agent": "Mozilla/5.0",
+            "accept": "application/json, text/plain, */*",
+            "referer": "https://www.zhipin.com/web/geek/resume",
+            "x-requested-with": "XMLHttpRequest",
+        },
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    code = payload.get("code")
+    if code != 0:
+        raise AuthError(f"BOSS 用户信息检查失败，业务码={code}")
+    data = payload.get("zpData") or {}
+    candidates = [data, data.get("baseInfo") or {}, data.get("geekInfo") or {}, data.get("userInfo") or {}]
+    for candidate in candidates:
+        for key in ("name", "userName", "geekName", "nickName"):
+            value = candidate.get(key) if isinstance(candidate, dict) else None
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    raise AuthError("BOSS 用户信息响应中缺少用户名")
+
+
+def import_verified_cookies(content: bytes, destination: str | Path, session=None, timeout=30):
+    try:
+        payload = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise AuthError("Cookie 文件不是有效的 UTF-8 JSON") from exc
+    cookies = validate_cookies(payload)
+    name = fetch_user_name(cookies, session=session, timeout=timeout)
+    _write_cookies(cookies, destination)
+    return name
 
 
 def cookie_dict(cookies):

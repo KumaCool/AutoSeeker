@@ -1,23 +1,37 @@
+import secrets
 from pathlib import Path
 from urllib.parse import urlencode, urlparse
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from auto_seeker.application.query_jobs import JobQuery, SortOrder
+from auto_seeker.auth import AuthError, import_verified_cookies
 from auto_seeker.infrastructure.sqlite_repository import SQLiteJobRepository
 
 WEB_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=WEB_DIR / "templates")
+MAX_COOKIE_FILE_SIZE = 1024 * 1024
 
 
-def create_app(database_path, default_page_size=50):
+def create_app(database_path, default_page_size=50, cookie_path=None, request_timeout=30):
     app = FastAPI(title="AutoSeeker", docs_url=None, redoc_url=None)
     repository = SQLiteJobRepository(database_path)
     app.state.repository = repository
+    app.state.cookie_path = (
+        Path(cookie_path) if cookie_path else Path(database_path).parent.parent / "secrets/cookies.json"
+    )
+    app.state.user_name = None
+    app.state.csrf_token = secrets.token_urlsafe(32)
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
+
+    def shared_context():
+        return {
+            "user_name": app.state.user_name,
+            "csrf_token": app.state.csrf_token,
+        }
 
     @app.get("/", include_in_schema=False)
     def root():
@@ -78,8 +92,10 @@ def create_app(database_path, default_page_size=50):
             request,
             "jobs/list.html",
             {
+                **shared_context(),
                 "query": query,
                 "page": result,
+                "cookie_imported": request.query_params.get("cookie_imported") == "1",
                 "previous_query": page_query(query.page - 1),
                 "next_query": page_query(query.page + 1),
             },
@@ -89,12 +105,12 @@ def create_app(database_path, default_page_size=50):
     def job_detail(request: Request, job_id: str):
         job = repository.get_job_detail(job_id)
         if job is None:
-            return templates.TemplateResponse(request, "errors/404.html", status_code=404)
+            return templates.TemplateResponse(request, "errors/404.html", shared_context(), status_code=404)
         parsed = urlparse(job["url"])
         job["safe_url"] = (
             job["url"] if parsed.scheme == "https" and parsed.hostname in {"zhipin.com", "www.zhipin.com"} else None
         )
-        return templates.TemplateResponse(request, "jobs/detail.html", {"job": job})
+        return templates.TemplateResponse(request, "jobs/detail.html", {**shared_context(), "job": job})
 
     @app.get("/runs", include_in_schema=False)
     def collection_runs(request: Request):
@@ -102,6 +118,7 @@ def create_app(database_path, default_page_size=50):
             request,
             "runs/list.html",
             {
+                **shared_context(),
                 "runs": repository.list_runs(),
                 "status_labels": {
                     "running": "进行中",
@@ -111,5 +128,34 @@ def create_app(database_path, default_page_size=50):
                 },
             },
         )
+
+    @app.post("/auth/cookies", include_in_schema=False)
+    async def import_cookie_file(
+        request: Request,
+        csrf_token: str = Form(...),
+        cookie_file: UploadFile = File(...),
+    ):
+        if not secrets.compare_digest(csrf_token, app.state.csrf_token):
+            raise HTTPException(status_code=403, detail="CSRF 校验失败")
+        if cookie_file.content_type != "application/json" or not (cookie_file.filename or "").lower().endswith(".json"):
+            raise HTTPException(status_code=400, detail="只接受 JSON Cookie 文件")
+        content = await cookie_file.read(MAX_COOKIE_FILE_SIZE + 1)
+        if len(content) > MAX_COOKIE_FILE_SIZE:
+            raise HTTPException(status_code=413, detail="Cookie 文件不得超过 1 MiB")
+        try:
+            app.state.user_name = import_verified_cookies(
+                content,
+                app.state.cookie_path,
+                timeout=request_timeout,
+            )
+        except AuthError as exc:
+            app.state.user_name = None
+            return templates.TemplateResponse(
+                request,
+                "errors/cookie-import.html",
+                {**shared_context(), "error": str(exc)},
+                status_code=400,
+            )
+        return RedirectResponse("/jobs?cookie_imported=1", status_code=303)
 
     return app
