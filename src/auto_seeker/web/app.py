@@ -47,24 +47,27 @@ def create_app(database_path, default_page_size=50, cookie_path=None, request_ti
     def jobs(
         request: Request,
         q: str | None = None,
-        minimum_salary: float | None = Query(default=None, ge=0),
-        maximum_experience: int | None = Query(default=None, ge=0),
+        minimum_salary: str | None = None,
+        maximum_experience: str | None = None,
         location: str | None = None,
         new_only: bool = False,
-        run_id: int | None = Query(default=None, ge=1),
+        run_id: str | None = None,
         sort: SortOrder = SortOrder.NEWEST,
         page: int = Query(default=1, ge=1),
         page_size: int | None = Query(default=None),
     ):
         effective_page_size = page_size if page_size is not None else default_page_size
         try:
+            parsed_minimum_salary = float(minimum_salary) if minimum_salary not in (None, "") else None
+            parsed_maximum_experience = int(maximum_experience) if maximum_experience not in (None, "") else None
+            parsed_run_id = int(run_id) if run_id not in (None, "") else None
             query = JobQuery(
                 q,
-                minimum_salary,
-                maximum_experience,
+                parsed_minimum_salary,
+                parsed_maximum_experience,
                 location,
                 new_only,
-                run_id,
+                parsed_run_id,
                 sort,
                 page,
                 effective_page_size,

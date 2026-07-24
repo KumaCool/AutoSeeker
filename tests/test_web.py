@@ -184,6 +184,15 @@ class JobListWebTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 422)
 
+    def test_empty_numeric_form_fields_are_treated_as_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            response = TestClient(create_app(Path(directory) / "autoseeker.sqlite3")).get(
+                "/jobs?minimum_salary=&maximum_experience=&run_id="
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("尚无采集数据", response.text)
+
     def test_invalid_page_size_returns_422(self):
         with tempfile.TemporaryDirectory() as directory:
             response = TestClient(create_app(Path(directory) / "autoseeker.sqlite3")).get("/jobs?page_size=21")

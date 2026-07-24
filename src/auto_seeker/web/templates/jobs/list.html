@@ -9,8 +9,8 @@
 </section>
 <form method="get" action="/jobs" class="filters">
   <label>关键词<input name="q" value="{{ query.q or '' }}" placeholder="职位、公司或技能"></label>
-  <label>最低薪资(K)<input type="number" name="minimum_salary" min="0" value="{{ query.minimum_salary if query.minimum_salary is not none else '' }}"></label>
-  <label>最大经验(年)<input type="number" name="maximum_experience" min="0" value="{{ query.maximum_experience if query.maximum_experience is not none else '' }}"></label>
+  <label>最低薪资(K)<input type="number" {% if query.minimum_salary is not none %}name="minimum_salary" value="{{ query.minimum_salary }}"{% else %}data-name="minimum_salary"{% endif %} min="0" oninput="this.name=this.dataset.name||this.name"></label>
+  <label>最大经验(年)<input type="number" {% if query.maximum_experience is not none %}name="maximum_experience" value="{{ query.maximum_experience }}"{% else %}data-name="maximum_experience"{% endif %} min="0" oninput="this.name=this.dataset.name||this.name"></label>
   <label>地点<input name="location" value="{{ query.location or '' }}" placeholder="武汉"></label>
   <label>排序<select name="sort">
     <option value="newest" {% if query.sort.value == 'newest' %}selected{% endif %}>新增优先</option>
